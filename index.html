@@ -211,11 +211,15 @@ footer b{color:var(--sub)}
 
     <div class="set-h">cloud sync</div>
     <div id="auth-box">
-      <div class="cfg-row" style="border:none;gap:8px">
-        <input type="email" id="auth-email" placeholder="you@email.com" style="flex:1;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
-        <button id="auth-btn" onclick="sendLink()" style="background:var(--sub-alt);color:var(--main);padding:9px 14px;border-radius:var(--r);font-size:.8rem">send link</button>
+      <div class="cfg-row" style="border:none;gap:8px;flex-wrap:wrap">
+        <input type="email" id="auth-email" placeholder="you@email.com" autocomplete="username" style="flex:1;min-width:150px;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
+        <input type="password" id="auth-pass" placeholder="password" autocomplete="current-password" style="flex:1;min-width:120px;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
       </div>
-      <p class="set-note" id="auth-note">sign in once per device with a magic link — runs then sync to supabase from anywhere.</p>
+      <div class="cfg-row" style="border:none;gap:8px">
+        <button onclick="signIn()" style="background:var(--sub-alt);color:var(--main);padding:9px 14px;border-radius:var(--r);font-size:.8rem">sign in</button>
+        <button onclick="signUp()" style="color:var(--sub);padding:9px 10px;font-size:.75rem">create account (first time)</button>
+      </div>
+      <p class="set-note" id="auth-note">sign in once per device — you stay signed in after that.</p>
     </div>
     <div id="auth-signed" style="display:none">
       <p class="set-note" id="auth-who"></p>
@@ -272,12 +276,22 @@ async function initAuth(){
   setCloud(!!sbUser,sbUser?.email||"");
   sb.auth.onAuthStateChange((_e,s)=>{ sbUser=s?.user||null; setCloud(!!sbUser,sbUser?.email||""); });
 }
-async function sendLink(){
+async function signIn(){
   const email=document.getElementById("auth-email").value.trim();
+  const pass=document.getElementById("auth-pass").value;
   const note=document.getElementById("auth-note");
-  if(!sb||!email){note.textContent="enter your email first.";return;}
-  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-  note.textContent=error?("error: "+error.message):"link sent — check your email, open it on this device.";
+  if(!sb||!email||!pass){note.textContent="enter email and password.";return;}
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  note.textContent=error?("error: "+error.message):"signed in.";
+}
+async function signUp(){
+  const email=document.getElementById("auth-email").value.trim();
+  const pass=document.getElementById("auth-pass").value;
+  const note=document.getElementById("auth-note");
+  if(!sb||!email||!pass){note.textContent="enter email and a new password first.";return;}
+  if(pass.length<8){note.textContent="password needs 8+ characters.";return;}
+  const {error}=await sb.auth.signUp({email,password:pass});
+  note.textContent=error?("error: "+error.message):"account created — check your email once to confirm, then sign in.";
 }
 async function signOut(){ if(sb)await sb.auth.signOut(); }
 async function saveRun(run){
