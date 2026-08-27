@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>mentalmath</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend+Deca:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#323437; --main:#e2b714; --caret:#e2b714; --sub:#646669; --sub-alt:#2c2e31; --text:#d1d0c5; --error:#ca4754;
+  --mono:'JetBrains Mono',monospace; --sans:'Lexend Deca',sans-serif;
+  --r:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;flex-direction:column;transition:background .25s,color .25s;overflow:hidden}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+input{font-family:inherit}
+
+/* ---------- top bar ---------- */
+header{display:flex;align-items:center;gap:14px;padding:16px 20px;flex-shrink:0}
+.logo{font-weight:700;font-size:1.15rem;color:var(--text);letter-spacing:-.5px;display:flex;align-items:baseline;gap:2px}
+.logo .tick{color:var(--main);font-size:.7rem;transform:translateY(-8px)}
+.logo small{color:var(--sub);font-size:.6rem;font-weight:400;display:block}
+.iconbtn{color:var(--sub);font-size:.95rem;padding:6px;transition:color .15s}
+.iconbtn:hover,.iconbtn.active{color:var(--main)}
+header .spacer{flex:1}
+
+/* ---------- panes ---------- */
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 18px;overflow-y:auto}
+.pane{display:none;width:100%;max-width:560px;animation:fade .2s}
+.pane.show{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+
+/* ---------- config (home) ---------- */
+.cfg-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--sub-alt);font-size:.85rem}
+.cfg-row:last-of-type{border-bottom:none}
+.chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--sub);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--bg);flex-shrink:0;transition:.15s}
+.chk.on{background:var(--main);border-color:var(--main)}
+.cfg-row .lbl{min-width:96px;color:var(--text)}
+.range{color:var(--sub);font-size:.75rem;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.range input{width:52px;background:var(--sub-alt);border:none;border-radius:5px;color:var(--text);text-align:center;padding:4px 2px;font-size:.75rem}
+.range input:focus{outline:2px solid var(--main)}
+.durs{display:flex;gap:8px;margin:18px 0 6px;justify-content:center}
+.durs button{color:var(--sub);font-size:.8rem;padding:6px 12px;border-radius:var(--r);transition:.15s}
+.durs button.on{color:var(--main);background:var(--sub-alt)}
+.start{display:block;margin:22px auto 0;background:var(--main);color:var(--bg);font-weight:700;font-size:.95rem;padding:12px 46px;border-radius:var(--r);transition:transform .1s}
+.start:active{transform:scale(.96)}
+.hint{text-align:center;color:var(--sub);font-size:.68rem;margin-top:14px;font-family:var(--sans);font-weight:300}
+
+/* ---------- game ---------- */
+.hud{display:flex;justify-content:space-between;color:var(--sub);font-size:.85rem;margin-bottom:8vh}
+.hud .time{color:var(--main);font-weight:500}
+.problem{text-align:center;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:500;letter-spacing:1px;margin-bottom:26px;min-height:1.3em}
+.answer-wrap{display:flex;justify-content:center}
+#answer{background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:2rem;text-align:center;width:200px;padding:10px;caret-color:var(--caret)}
+#answer:focus{outline:none;box-shadow:0 0 0 2px var(--main)}
+#answer.ro{pointer-events:none}
+.answer-ghost{font-size:2rem;text-align:center;min-height:64px;background:var(--sub-alt);border-radius:var(--r);width:200px;margin:0 auto;display:flex;align-items:center;justify-content:center;letter-spacing:2px}
+.answer-ghost .caret{display:inline-block;width:2px;height:1.2em;background:var(--caret);margin-left:2px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+.flash-wrong{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+/* keypads */
+.pad-area{margin:20px 0 0;width:100%;position:relative}
+.pad{display:grid;gap:10px;user-select:none}
+.pad.full{grid-template-columns:repeat(3,minmax(0,88px));justify-content:center}
+.pad.one{grid-template-columns:repeat(3,62px)}
+.pad.one.right{margin-left:auto;margin-right:0}
+.pad.one.left{margin-left:0;margin-right:auto}
+.pad button{background:var(--sub-alt);color:var(--text);border-radius:var(--r);font-size:1.5rem;padding:16px 0;transition:.1s;touch-action:manipulation}
+.pad.one button{font-size:1.25rem;padding:13px 0}
+.pad button:active{background:var(--main);color:var(--bg)}
+.pad .fn{color:var(--sub);font-size:1rem}
+.swap-btn{position:absolute;top:6px;color:var(--sub);font-size:.7rem;padding:6px 10px;border-radius:var(--r);background:var(--sub-alt);transition:.15s;font-family:var(--sans);font-weight:300;z-index:2}
+.swap-btn:active{color:var(--main)}
+.swap-btn.pos-left{right:0}
+.swap-btn.pos-right{left:0}
+
+/* ---------- results ---------- */
+.res-score{text-align:center;font-size:4rem;color:var(--main);font-weight:700}
+.res-sub{text-align:center;color:var(--sub);font-size:.8rem;margin-bottom:22px}
+.res-stats{display:flex;justify-content:center;gap:34px;margin-bottom:26px}
+.res-stats div{text-align:center}
+.res-stats .v{font-size:1.4rem;color:var(--text)}
+.res-stats .k{font-size:.65rem;color:var(--sub)}
+.res-actions{display:flex;justify-content:center;gap:14px}
+.res-actions button{color:var(--sub);font-size:.85rem;padding:8px 16px;border-radius:var(--r);transition:.15s}
+.res-actions button:hover{color:var(--main)}
+.sess{margin-top:30px}
+.sess h3{color:var(--sub);font-size:.7rem;font-weight:400;text-transform:lowercase;margin-bottom:8px}
+.sess-row{display:flex;justify-content:space-between;color:var(--sub);font-size:.75rem;padding:5px 0;border-bottom:1px solid var(--sub-alt)}
+.sess-row .s{color:var(--text)}
+.sess-note{color:var(--sub);font-size:.62rem;font-family:var(--sans);font-weight:300;margin-top:8px}
+
+/* ---------- settings ---------- */
+.set-h{color:var(--main);font-size:.75rem;margin:22px 0 10px;text-transform:lowercase}
+.set-h:first-child{margin-top:0}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+.tcard{border-radius:var(--r);padding:10px 12px;font-size:.72rem;text-align:left;border:2px solid transparent;transition:.15s}
+.tcard.on{border-color:var(--main)}
+.tcard .dots{display:flex;gap:4px;margin-top:6px}
+.tcard .dots i{width:9px;height:9px;border-radius:50%}
+/* numeral picker — the apple-clock style signature */
+.num-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ncard{background:var(--sub-alt);border-radius:var(--r);padding:14px 10px 10px;text-align:center;border:2px solid transparent;transition:.15s}
+.ncard.on{border-color:var(--main)}
+.ncard .big{font-size:1.9rem;letter-spacing:3px;color:var(--text);line-height:1.1}
+.ncard .nm{color:var(--sub);font-size:.62rem;margin-top:6px;font-family:var(--sans);font-weight:300}
+.seg{display:flex;background:var(--sub-alt);border-radius:var(--r);padding:4px;gap:4px}
+.seg button{flex:1;color:var(--sub);font-size:.72rem;padding:8px 4px;border-radius:6px;transition:.15s}
+.seg button.on{background:var(--bg);color:var(--main)}
+.set-note{color:var(--sub);font-size:.64rem;font-family:var(--sans);font-weight:300;margin-top:6px}
+
+footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:12px;font-family:var(--sans);font-weight:300}
+footer b{color:var(--sub)}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="logo" onclick="go('config')"><span class="tick">✓</span>mentalmath</button>
+  <div class="spacer"></div>
+  <button class="iconbtn" id="nav-config" onclick="go('config')" title="practice">∑</button>
+  <button class="iconbtn" id="nav-settings" onclick="go('settings')" title="settings">⚙</button>
+  <span class="iconbtn" id="cloud-dot" title="offline — sign in via settings">◌</span>
+</header>
+
+<main>
+
+  <!-- CONFIG -->
+  <section class="pane" id="pane-config">
+    <div class="cfg-row"><span class="chk on" data-op="add" onclick="toggleOp(this)">✓</span><span class="lbl">addition</span>
+      <span class="range">(<input type="number" id="a1" value="2"> to <input type="number" id="a2" value="100">) + (<input type="number" id="a3" value="2"> to <input type="number" id="a4" value="100">)</span></div>
+    <div class="cfg-row"><span class="chk on" data-op="sub" onclick="toggleOp(this)">✓</span><span class="lbl">subtraction</span>
+      <span class="range">addition in reverse</span></div>
+    <div class="cfg-row"><span class="chk on" data-op="mul" onclick="toggleOp(this)">✓</span><span class="lbl">multiplication</span>
+      <span class="range">(<input type="number" id="m1" value="2"> to <input type="number" id="m2" value="12">) × (<input type="number" id="m3" value="2"> to <input type="number" id="m4" value="100">)</span></div>
+    <div class="cfg-row"><span class="chk on" data-op="div" onclick="toggleOp(this)">✓</span><span class="lbl">division</span>
+      <span class="range">multiplication in reverse</span></div>
+    <div class="durs" id="durs">
+      <button data-d="30">30s</button><button data-d="60">60s</button><button data-d="120" class="on">120s</button><button data-d="300">300s</button>
+    </div>
+    <button class="start" onclick="startGame()">start</button>
+    <p class="hint">answers submit automatically — no enter key, no friction</p>
+  </section>
+
+  <!-- GAME -->
+  <section class="pane" id="pane-game">
+    <div class="hud"><span>seconds <span class="time" id="time">120</span></span><span>score <span id="score" style="color:var(--text)">0</span></span></div>
+    <div class="problem" id="problem"></div>
+    <div class="answer-wrap" id="native-wrap">
+      <input id="answer" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="answer-ghost" id="ghost-wrap" style="display:none"><span id="ghost"></span><span class="caret"></span></div>
+    <div class="pad-area" id="pad-area" style="display:none">
+      <button class="swap-btn" id="swap-btn" style="display:none" onclick="swapSide()">⇄ swap side</button>
+      <div class="pad full" id="pad"></div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="pane" id="pane-results">
+    <div class="res-score" id="r-score">0</div>
+    <div class="res-sub" id="r-sub">problems solved</div>
+    <div class="res-stats">
+      <div><div class="v" id="r-best">–</div><div class="k">session best</div></div>
+      <div><div class="v" id="r-avg">–</div><div class="k">avg sec / problem</div></div>
+      <div><div class="v" id="r-acc">–</div><div class="k">first-try accuracy</div></div>
+    </div>
+    <div class="res-actions">
+      <button onclick="startGame()">try again</button>
+      <button onclick="go('config')">change settings</button>
+    </div>
+    <div class="sess">
+      <h3>this session</h3>
+      <div id="sess-list"></div>
+      <p class="sess-note">sign in via settings to sync runs across devices.</p>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="pane" id="pane-settings">
+    <div class="set-h">theme</div>
+    <div class="theme-grid" id="themes"></div>
+
+    <div class="set-h">number style</div>
+    <div class="num-grid" id="numerals"></div>
+    <p class="set-note">changes how problems are displayed, apple lock-screen style. you always type on a western keypad.</p>
+
+    <div class="set-h">keypad</div>
+    <div class="seg" id="kbd-seg">
+      <button data-k="native">native keyboard</button>
+      <button data-k="pad">on-screen pad</button>
+      <button data-k="one">one-hand pad</button>
+    </div>
+    <div class="seg" id="side-seg" style="margin-top:8px">
+      <button data-s="right" class="on">one-hand: right</button>
+      <button data-s="left">one-hand: left</button>
+    </div>
+    <p class="set-note">on-screen pad is centered. one-hand pad hugs a side for thumb reach — tap ⇄ during play or pick here.</p>
+
+    <div class="set-h">font</div>
+    <div class="seg" id="font-seg">
+      <button data-f="mono" class="on">jetbrains mono</button>
+      <button data-f="sans">lexend deca</button>
+    </div>
+
+    <div class="set-h">cloud sync</div>
+    <div id="auth-box">
+      <div class="cfg-row" style="border:none;gap:8px">
+        <input type="email" id="auth-email" placeholder="you@email.com" style="flex:1;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
+        <button id="auth-btn" onclick="sendLink()" style="background:var(--sub-alt);color:var(--main);padding:9px 14px;border-radius:var(--r);font-size:.8rem">send link</button>
+      </div>
+      <p class="set-note" id="auth-note">sign in once per device with a magic link — runs then sync to supabase from anywhere.</p>
+    </div>
+    <div id="auth-signed" style="display:none">
+      <p class="set-note" id="auth-who"></p>
+      <button onclick="signOut()" style="color:var(--sub);font-size:.75rem;padding:6px 0">sign out</button>
+    </div>
+  </section>
+
+</main>
+<footer>v0.2 — zetamac loop × monkeytype skin × supabase sync</footer>
+
+<script>
+/* ---------------- themes (palettes from monkeytype theme file) ---------------- */
+const THEMES={
+  serika_dark:{bg:"#323437",main:"#e2b714",sub:"#646669",subAlt:"#2c2e31",text:"#d1d0c5",error:"#ca4754"},
+  dark:{bg:"#111111",main:"#eeeeee",sub:"#444444",subAlt:"#191919",text:"#eeeeee",error:"#da3333"},
+  nord:{bg:"#242933",main:"#88c0d0",sub:"#929aaa",subAlt:"#2e3440",text:"#d8dee9",error:"#bf616a"},
+  rose_pine:{bg:"#1f1d27",main:"#9ccfd8",sub:"#c4a7e7",subAlt:"#282533",text:"#e0def4",error:"#eb6f92"},
+  dracula:{bg:"#282a36",main:"#bd93f9",sub:"#6272a4",subAlt:"#20222c",text:"#f8f8f2",error:"#ff5555"},
+  gruvbox_dark:{bg:"#282828",main:"#d79921",sub:"#665c54",subAlt:"#212121",text:"#ebdbb2",error:"#fb4934"},
+  paper:{bg:"#eeeeee",main:"#444444",sub:"#b2b2b2",subAlt:"#dddddd",text:"#444444",error:"#d70000"},
+  matrix:{bg:"#000000",main:"#15ff00",sub:"#006500",subAlt:"#032000",text:"#d1ffcd",error:"#da3333"},
+};
+/* ---------------- numeral systems ---------------- */
+const NUMSYS={
+  western:{name:"Western",digits:"0123456789"},
+  eastern_arabic:{name:"Arabic, Eastern",digits:"٠١٢٣٤٥٦٧٨٩"},
+  devanagari:{name:"Devanagari",digits:"०१२३४५६७८९"},
+  bangla:{name:"Bangla",digits:"০১২৩৪৫৬৭৮৯"},
+};
+const OPSYM={western:{p:"+",m:"−",x:"×",d:"÷"},default:{p:"+",m:"−",x:"×",d:"÷"}};
+
+const S={theme:"serika_dark",numsys:"western",kbd:"native",side:"right",font:"mono",dur:120};
+const ops={add:true,sub:true,mul:true,div:true};
+let game=null, sessions=[];
+
+/* ---------------- supabase (cloud sync, fail-soft) ---------------- */
+const SB_URL="https://bkshogsmqrwfoctoihqg.supabase.co";
+const SB_KEY="sb_publishable_0lWr5WFpHREkUoQkk95XRA_WDl-Thjk";
+let sb=null, sbUser=null;
+try{ sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(e){ console.warn("supabase unavailable",e); }
+function setCloud(on,who){
+  const d=document.getElementById("cloud-dot");
+  d.textContent=on?"●":"◌";
+  d.style.color=on?"var(--main)":"var(--sub)";
+  d.title=on?"syncing as "+who:"offline — sign in via settings";
+  document.getElementById("auth-box").style.display=on?"none":"block";
+  document.getElementById("auth-signed").style.display=on?"block":"none";
+  if(on)document.getElementById("auth-who").textContent="signed in as "+who;
+}
+async function initAuth(){
+  if(!sb)return;
+  const {data}=await sb.auth.getSession();
+  sbUser=data.session?.user||null;
+  setCloud(!!sbUser,sbUser?.email||"");
+  sb.auth.onAuthStateChange((_e,s)=>{ sbUser=s?.user||null; setCloud(!!sbUser,sbUser?.email||""); });
+}
+async function sendLink(){
+  const email=document.getElementById("auth-email").value.trim();
+  const note=document.getElementById("auth-note");
+  if(!sb||!email){note.textContent="enter your email first.";return;}
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+  note.textContent=error?("error: "+error.message):"link sent — check your email, open it on this device.";
+}
+async function signOut(){ if(sb)await sb.auth.signOut(); }
+async function saveRun(run){
+  if(!sb||!sbUser)return{cloud:false};
+  const {error}=await sb.from("runs").insert(run);
+  if(error){console.warn("save failed",error);return{cloud:false};}
+  return{cloud:true};
+}
+async function allTimeBest(dur){
+  if(!sb||!sbUser)return null;
+  const {data,error}=await sb.from("runs").select("score").eq("duration_s",dur).order("score",{ascending:false}).limit(1);
+  if(error||!data?.length)return null;
+  return data[0].score;
+}
+
+/* ---------------- helpers ---------------- */
+const $=id=>document.getElementById(id);
+function toNum(n,sys){const d=NUMSYS[sys].digits;return String(n).split("").map(c=>/\d/.test(c)?d[+c]:c).join("");}
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+function go(p){
+  document.querySelectorAll(".pane").forEach(x=>x.classList.remove("show"));
+  $("pane-"+p).classList.add("show");
+  $("nav-config").classList.toggle("active",p==="config");
+  $("nav-settings").classList.toggle("active",p==="settings");
+  if(game&&p!=="game"){clearInterval(game.tick);game=null;}
+}
+
+/* ---------------- config ---------------- */
+function toggleOp(el){
+  const k=el.dataset.op;ops[k]=!ops[k];
+  el.classList.toggle("on",ops[k]);el.textContent=ops[k]?"✓":"";
+}
+$("durs").addEventListener("click",e=>{
+  if(!e.target.dataset.d)return;
+  S.dur=+e.target.dataset.d;
+  document.querySelectorAll("#durs button").forEach(b=>b.classList.toggle("on",b===e.target));
+});
+
+/* ---------------- game loop (zetamac-faithful) ---------------- */
+function makeProblem(){
+  const pool=Object.keys(ops).filter(k=>ops[k]);
+  const op=pool[rnd(0,pool.length-1)]||"add";
+  const A1=+$("a1").value,A2=+$("a2").value,A3=+$("a3").value,A4=+$("a4").value;
+  const M1=+$("m1").value,M2=+$("m2").value,M3=+$("m3").value,M4=+$("m4").value;
+  let x,y,ans,txt;
+  if(op==="add"){x=rnd(A1,A2);y=rnd(A3,A4);ans=x+y;txt=`${x} + ${y}`;}
+  else if(op==="sub"){x=rnd(A1,A2);y=rnd(A3,A4);ans=x;txt=`${x+y} − ${y}`;}
+  else if(op==="mul"){x=rnd(M1,M2);y=rnd(M3,M4);ans=x*y;txt=`${x} × ${y}`;}
+  else{x=rnd(M1,M2);y=rnd(M3,M4);ans=y;txt=`${x*y} ÷ ${x}`;}
+  return{ans,txt};
+}
+function renderProblem(){
+  $("problem").textContent=toNum(game.p.txt,S.numsys)+" =";
+}
+function startGame(){
+  if(!Object.values(ops).some(v=>v))return;
+  game={score:0,left:S.dur,p:makeProblem(),buf:"",attempted:0,firstTryMiss:0,missedThis:false,t0:Date.now(),pStart:Date.now(),problems:[]};
+  go("game");
+  $("score").textContent="0";$("time").textContent=game.left;
+  renderProblem();applyKbd();clearAnswer();
+  game.tick=setInterval(()=>{
+    game.left--;$("time").textContent=game.left;
+    if(game.left<=0)endGame();
+  },1000);
+  if(S.kbd==="native")setTimeout(()=>$("answer").focus(),50);
+}
+function clearAnswer(){game.buf="";$("answer").value="";$("ghost").textContent="";}
+function checkBuf(){
+  if(game.buf===""||isNaN(+game.buf))return;
+  if(+game.buf===game.p.ans){
+    game.score++;game.attempted++;
+    if(game.missedThis)game.firstTryMiss++;
+    game.problems.push({p:game.p.txt,ans:game.p.ans,ms:Date.now()-game.pStart,missed:game.missedThis});
+    $("score").textContent=game.score;
+    game.p=makeProblem();game.missedThis=false;game.pStart=Date.now();
+    renderProblem();clearAnswer();
+  } else if(game.buf.length>=String(game.p.ans).length){
+    game.missedThis=true;
+    const el=S.kbd==="native"?$("answer"):$("ghost-wrap");
+    el.classList.remove("flash-wrong");void el.offsetWidth;el.classList.add("flash-wrong");
+  }
+}
+$("answer").addEventListener("input",e=>{
+  if(!game)return;
+  game.buf=e.target.value.replace(/[^\d-]/g,"");
+  e.target.value=game.buf;
+  checkBuf();
+});
+function padPress(k){
+  if(!game)return;
+  if(k==="⌫")game.buf=game.buf.slice(0,-1);
+  else if(k==="C")game.buf="";
+  else game.buf+=k;
+  $("ghost").textContent=toNum(game.buf,"western");
+  checkBuf();
+}
+function endGame(){
+  clearInterval(game.tick);
+  const dur=S.dur;
+  const acc=game.attempted?Math.round(100*(game.attempted-game.firstTryMiss)/game.attempted):null;
+  const avgMs=game.problems.length?Math.round(game.problems.reduce((a,p)=>a+p.ms,0)/game.problems.length):null;
+  const run={
+    duration_s:dur,score:game.score,
+    first_try_accuracy:acc,avg_ms_per_problem:avgMs,
+    config:{ops:{...ops},add:[+$("a1").value,+$("a2").value,+$("a3").value,+$("a4").value],mul:[+$("m1").value,+$("m2").value,+$("m3").value,+$("m4").value],numsys:S.numsys,kbd:S.kbd},
+    problems:game.problems
+  };
+  sessions.unshift({score:game.score,dur,at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
+  $("r-score").textContent=game.score;
+  $("r-best").textContent=Math.max(...sessions.map(s=>s.score));
+  document.querySelector("#pane-results .res-stats .k").textContent="session best";
+  $("r-avg").textContent=game.score?( dur/game.score).toFixed(1):"–";
+  $("r-acc").textContent=acc===null?"–":acc+"%";
+  $("sess-list").innerHTML=sessions.slice(0,8).map(s=>
+    `<div class="sess-row"><span>${s.at} · ${s.dur}s</span><span class="s">${s.score}</span></div>`).join("");
+  const myScore=game.score;
+  game=null;
+  go("results");
+  /* cloud: fire-and-forget save, then upgrade the best stat to all-time */
+  saveRun(run).then(async r=>{
+    const note=document.querySelector(".sess-note");
+    note.textContent=r.cloud?"synced to supabase ● claude can read your history any time.":"offline run — sign in via settings to sync across devices.";
+    if(r.cloud){
+      const best=await allTimeBest(dur);
+      if(best!==null){
+        $("r-best").textContent=Math.max(best,myScore);
+        document.querySelector("#pane-results .res-stats .k").textContent="all-time best · "+dur+"s";
+      }
+    }
+  });
+}
+
+/* ---------------- keypad modes ---------------- */
+const PADKEYS=["7","8","9","4","5","6","1","2","3","C","0","⌫"];
+function applyKbd(){
+  const pad=$("pad");
+  const area=$("pad-area");
+  const swap=$("swap-btn");
+  const usePad=S.kbd!=="native";
+  $("native-wrap").style.display=usePad?"none":"flex";
+  $("ghost-wrap").style.display=usePad?"flex":"none";
+  area.style.display=usePad?"block":"none";
+  const isOne=S.kbd==="one";
+  pad.className="pad "+(isOne?"one "+S.side:"full");
+  /* swap button only for one-hand mode */
+  swap.style.display=isOne?"block":"none";
+  swap.className="swap-btn pos-"+S.side;
+  if(usePad&&!pad.childElementCount){
+    PADKEYS.forEach(k=>{
+      const b=document.createElement("button");
+      b.textContent=k;if(k==="C"||k==="⌫")b.className="fn";
+      b.addEventListener("pointerdown",e=>{e.preventDefault();padPress(k);});
+      pad.appendChild(b);
+    });
+  }
+}
+function swapSide(){
+  S.side=S.side==="right"?"left":"right";
+  applyKbd();
+  document.querySelectorAll("#side-seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===S.side));
+}
+$("kbd-seg").addEventListener("click",e=>{
+  if(!e.target.dataset.k)return;S.kbd=e.target.dataset.k;
+  document.querySelectorAll("#kbd-seg button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.kbd));
+});
+$("side-seg").addEventListener("click",e=>{
+  if(!e.target.dataset.s)return;S.side=e.target.dataset.s;
+  document.querySelectorAll("#side-seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===S.side));
+  if(game)applyKbd();
+});
+
+/* ---------------- theme + numerals + font ---------------- */
+function applyTheme(){
+  const t=THEMES[S.theme],r=document.documentElement.style;
+  r.setProperty("--bg",t.bg);r.setProperty("--main",t.main);r.setProperty("--caret",t.main);
+  r.setProperty("--sub",t.sub);r.setProperty("--sub-alt",t.subAlt);r.setProperty("--text",t.text);r.setProperty("--error",t.error);
+  document.querySelectorAll(".tcard").forEach(c=>c.classList.toggle("on",c.dataset.t===S.theme));
+}
+function buildThemes(){
+  $("themes").innerHTML=Object.entries(THEMES).map(([k,t])=>
+    `<button class="tcard" data-t="${k}" style="background:${t.bg};color:${t.text}">${k.replace(/_/g," ")}
+      <span class="dots"><i style="background:${t.main}"></i><i style="background:${t.sub}"></i><i style="background:${t.text}"></i></span>
+    </button>`).join("");
+  $("themes").addEventListener("click",e=>{
+    const c=e.target.closest(".tcard");if(!c)return;S.theme=c.dataset.t;applyTheme();
+  });
+}
+function buildNumerals(){
+  $("numerals").innerHTML=Object.entries(NUMSYS).map(([k,n])=>
+    `<button class="ncard" data-n="${k}"><div class="big">${toNum("0123456789",k).slice(0,6)}</div><div class="nm">${n.name}</div></button>`).join("");
+  $("numerals").addEventListener("click",e=>{
+    const c=e.target.closest(".ncard");if(!c)return;S.numsys=c.dataset.n;
+    document.querySelectorAll(".ncard").forEach(x=>x.classList.toggle("on",x.dataset.n===S.numsys));
+    if(game)renderProblem();
+  });
+  document.querySelector('.ncard[data-n="western"]').classList.add("on");
+}
+$("font-seg").addEventListener("click",e=>{
+  if(!e.target.dataset.f)return;S.font=e.target.dataset.f;
+  document.body.style.fontFamily=S.font==="mono"?"var(--mono)":"var(--sans)";
+  document.querySelectorAll("#font-seg button").forEach(b=>b.classList.toggle("on",b.dataset.f===S.font));
+});
+
+/* ---------------- init ---------------- */
+buildThemes();buildNumerals();applyTheme();initAuth();
+document.querySelector('#kbd-seg [data-k="native"]').classList.add("on");
+go("config");
+</script>
+</body>
+</html>
