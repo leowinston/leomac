@@ -6,7 +6,7 @@ Built by Leo Winston. A zetamac-style arithmetic drill with the theming and cust
 
 ## Why this exists
 
-I practice mental math for quant-finanace interview prep. [Zetamac](https://arithmetic.zetamac.com) has the right drill but keeps no history; [Monkeytype](https://monkeytype.com) has the customization and progress tracking but is a typing test. leomac applies the Monkeytype model to arithmetic: the same fast drill, plus themes, alternative numeral systems, three keypad modes, and a record of every run. Because runs persist to Supabase, an AI assistant with database access reads the history and gives targeted feedback — for example, which operation is slowest by average solve time.
+I practice mental math for quant-finanace interview prep. [Zetamac](https://arithmetic.zetamac.com) has the right drill but keeps no history; [Monkeytype](https://monkeytype.com) has the customization and progress tracking but is a typing test. leomac applies the Monkeytype model to arithmetic: the same fast drill, plus themes, alternative numeral systems, an on-screen keypad, and a record of every run. Because runs persist to Supabase, an AI assistant with database access reads the history and gives targeted feedback — for example, which operation is slowest by average solve time.
 
 ## Features
 
@@ -14,7 +14,9 @@ I practice mental math for quant-finanace interview prep. [Zetamac](https://arit
 - Configurable ranges per operation (addition, subtraction, multiplication, division) and duration (30 / 60 / 120 / 300 s)
 - Monkeytype theme system through CSS custom properties
 - Alternative numeral display (Western, Eastern Arabic, Devanagari, Bangla) because I like eastern arabic and other cool alternative number systems
-- Three input modes: native keyboard, centered on-screen pad, one-hand pad with a side swap.
+- Two input modes: native keyboard or an on-screen pad (the default on touch devices). During play the pad shrinks to one side for one-hand reach and slides between sides; its digits follow the selected numeral system.
+- Home screen shows your personal best for the selected duration, a score trend, and recent runs.
+- Theme, numeral system, font and duration are saved to your account and follow you across devices.
 - Cross-device sync. Each run stores score, first-try accuracy, average solve time, the run config, and per-problem timing.
 
 ## Tech
