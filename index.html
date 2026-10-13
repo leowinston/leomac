@@ -565,7 +565,7 @@ function setCloud(on,who){
   const d=$("cloud-dot");
   d.classList.toggle("on",on);
   d.title=on?"syncing as "+who:"offline — sign in via settings";
-  $("auth-box").style.display=on?"flex":"none";
+  $("auth-box").style.display=on?"none":"flex";
   $("auth-signed").style.display=on?"flex":"none";
   if(on)$("auth-who").textContent="signed in as "+who;
 }
