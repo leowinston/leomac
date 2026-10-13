@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>mentalmath</title>
+<title>leomac</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend+Deca:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,73 +12,124 @@
   --bg:#323437; --main:#e2b714; --caret:#e2b714; --sub:#646669; --sub-alt:#2c2e31; --text:#d1d0c5; --error:#ca4754;
   --mono:'JetBrains Mono',monospace; --sans:'Lexend Deca',sans-serif;
   --r:8px;
+  /* one spring for every moving thing: pad slide, pad zoom, icon flips */
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --spring-t:.6s;
+}
+@supports (transition-timing-function:linear(0,1)){
+  :root{--spring:linear(0, 0.044, 0.152, 0.297, 0.456, 0.61, 0.75, 0.867, 0.96, 1.027, 1.072, 1.097, 1.106, 1.104, 1.094, 1.08, 1.063, 1.046, 1.031, 1.017, 1.007, 0.999, 0.993, 0.99, 0.989, 0.989, 0.99, 0.991, 0.993, 0.995, 0.996, 0.998, 1)}
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;flex-direction:column;transition:background .25s,color .25s;overflow:hidden}
-button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;touch-action:manipulation}
 input{font-family:inherit}
+
+/* ---------- bouncy press (class-driven so it works on iOS too) ---------- */
+.press{transform:scale(.92)!important;transition:transform .07s ease-out!important}
+.boing{animation:boing .45s cubic-bezier(.3,.7,.4,1)}
+@keyframes boing{0%{transform:scale(.92)}35%{transform:scale(1.06)}60%{transform:scale(.98)}80%{transform:scale(1.015)}100%{transform:scale(1)}}
 
 /* ---------- top bar ---------- */
 header{display:flex;align-items:center;gap:14px;padding:16px 20px;flex-shrink:0}
 .logo{font-weight:700;font-size:1.15rem;color:var(--text);letter-spacing:-.5px;display:flex;align-items:baseline;gap:2px}
-.logo .tick{color:var(--main);font-size:.7rem;transform:translateY(-8px)}
-.logo small{color:var(--sub);font-size:.6rem;font-weight:400;display:block}
+.logo .tick{color:var(--main);font-size:.7rem;transform:translateY(-8px);display:inline-block}
 .iconbtn{color:var(--sub);font-size:.95rem;padding:6px;transition:color .15s}
 .iconbtn:hover,.iconbtn.active{color:var(--main)}
 header .spacer{flex:1}
 
 /* ---------- panes ---------- */
-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 18px;overflow-y:auto}
-.pane{display:none;width:100%;max-width:560px;animation:fade .2s}
+/* auto margins centre a pane that fits and top-align one that overflows (justify-content:center would clip its top) */
+main{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 18px;overflow-y:auto}
+.pane{display:none;width:100%;max-width:560px;margin:auto 0;animation:rise .35s cubic-bezier(.2,.8,.2,1)}
 .pane.show{display:block}
-@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+#pane-config,#pane-settings{padding:8px 0 18px}
+@keyframes rise{from{opacity:0;transform:translateY(8px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+
+/* ---------- intro: logo types itself, tick pops, content rises ---------- */
+body.intro .logo .word{animation:type .42s steps(6,end) .1s both}
+body.intro .logo .tick{animation:pop .6s var(--spring) .55s both}
+body.intro header .iconbtn{animation:fadein .5s ease .6s both}
+body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 55ms + .55s)}
+body.intro footer{animation:fadein .6s ease 1s both}
+@keyframes type{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(0)}to{opacity:1;transform:translateY(-8px) scale(1)}}
+@keyframes fadein{from{opacity:0}}
+
+/* ---------- home: stats ---------- */
+.stats{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.k{font-size:.65rem;color:var(--sub)}
+.pb-v{font-size:3.2rem;font-weight:700;color:var(--main);line-height:1;margin-top:4px}
+.pb-v.new{animation:boing .6s cubic-bezier(.3,.7,.4,1)}
+.mini{display:flex;gap:18px;text-align:right}
+.mini .v{font-size:1.05rem;color:var(--text)}
+.spark-wrap{position:relative;height:58px;margin-bottom:10px}
+#spark{width:100%;height:100%;display:block;overflow:visible;touch-action:pan-y}
+.spark-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.68rem;font-family:var(--sans);font-weight:300;border:1px dashed var(--sub-alt);border-radius:var(--r)}
+.spark-tip{position:absolute;top:-6px;transform:translate(-50%,-100%);background:var(--sub-alt);color:var(--text);font-size:.65rem;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s}
+.spark-tip.show{opacity:1}
+.spark-tip span{color:var(--sub)}
 
 /* ---------- config (home) ---------- */
+.cfg{border-top:1px solid var(--sub-alt);margin-top:4px}
 .cfg-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--sub-alt);font-size:.85rem}
 .cfg-row:last-of-type{border-bottom:none}
-.chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--sub);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--bg);flex-shrink:0;transition:.15s}
+.chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--sub);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--bg);flex-shrink:0;transition:background .15s,border-color .15s;cursor:pointer}
 .chk.on{background:var(--main);border-color:var(--main)}
 .cfg-row .lbl{min-width:96px;color:var(--text)}
 .range{color:var(--sub);font-size:.75rem;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
 .range input{width:52px;background:var(--sub-alt);border:none;border-radius:5px;color:var(--text);text-align:center;padding:4px 2px;font-size:.75rem}
 .range input:focus{outline:2px solid var(--main)}
-.durs{display:flex;gap:8px;margin:18px 0 6px;justify-content:center}
-.durs button{color:var(--sub);font-size:.8rem;padding:6px 12px;border-radius:var(--r);transition:.15s}
+.durs{display:flex;gap:8px;margin:16px 0 4px;justify-content:center}
+.durs button{color:var(--sub);font-size:.8rem;padding:6px 12px;border-radius:var(--r);transition:color .15s,background .15s}
 .durs button.on{color:var(--main);background:var(--sub-alt)}
-.start{display:block;margin:22px auto 0;background:var(--main);color:var(--bg);font-weight:700;font-size:.95rem;padding:12px 46px;border-radius:var(--r);transition:transform .1s}
-.start:active{transform:scale(.96)}
-.hint{text-align:center;color:var(--sub);font-size:.68rem;margin-top:14px;font-family:var(--sans);font-weight:300}
+.start{display:block;width:100%;max-width:340px;margin:18px auto 0;background:var(--main);color:var(--bg);font-weight:700;font-size:1.35rem;letter-spacing:1px;padding:20px 0;border-radius:12px}
+.recent{margin-top:26px}
+.recent h3,.sess h3{color:var(--sub);font-size:.7rem;font-weight:400;text-transform:lowercase;margin-bottom:8px}
+.sess-row{display:flex;justify-content:space-between;gap:10px;color:var(--sub);font-size:.75rem;padding:6px 0;border-bottom:1px solid var(--sub-alt)}
+.sess-row .s{color:var(--text)}
+.sess-row .tag{color:var(--main);font-size:.6rem;margin-left:6px}
+.sess-note{color:var(--sub);font-size:.62rem;font-family:var(--sans);font-weight:300;margin-top:8px}
 
 /* ---------- game ---------- */
 .hud{display:flex;justify-content:space-between;color:var(--sub);font-size:.85rem;margin-bottom:8vh}
 .hud .time{color:var(--main);font-weight:500}
+/* arabic-indic digits are bidi "AN": without an override the operands of "124 ÷ 2" render swapped */
+.problem,#ghost{direction:ltr;unicode-bidi:bidi-override}
 .problem{text-align:center;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:500;letter-spacing:1px;margin-bottom:26px;min-height:1.3em}
 .answer-wrap{display:flex;justify-content:center}
 #answer{background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:2rem;text-align:center;width:200px;padding:10px;caret-color:var(--caret)}
 #answer:focus{outline:none;box-shadow:0 0 0 2px var(--main)}
-#answer.ro{pointer-events:none}
 .answer-ghost{font-size:2rem;text-align:center;min-height:64px;background:var(--sub-alt);border-radius:var(--r);width:200px;margin:0 auto;display:flex;align-items:center;justify-content:center;letter-spacing:2px}
 .answer-ghost .caret{display:inline-block;width:2px;height:1.2em;background:var(--caret);margin-left:2px;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:0}}
 .flash-wrong{animation:shake .25s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 
-/* keypads */
-.pad-area{margin:20px 0 0;width:100%;position:relative}
-.pad{display:grid;gap:10px;user-select:none}
-.pad.full{grid-template-columns:repeat(3,minmax(0,88px));justify-content:center}
-.pad.one{grid-template-columns:repeat(3,62px)}
-.pad.one.right{margin-left:auto;margin-right:0}
-.pad.one.left{margin-left:0;margin-right:auto}
-.pad button{background:var(--sub-alt);color:var(--text);border-radius:var(--r);font-size:1.5rem;padding:16px 0;transition:.1s;touch-action:manipulation}
-.pad.one button{font-size:1.25rem;padding:13px 0}
-.pad button:active{background:var(--main);color:var(--bg)}
-.pad .fn{color:var(--sub);font-size:1rem}
-.swap-btn{position:absolute;top:6px;color:var(--sub);font-size:.7rem;padding:6px 10px;border-radius:var(--r);background:var(--sub-alt);transition:.15s;font-family:var(--sans);font-weight:300;z-index:2}
-.swap-btn:active{color:var(--main)}
-.swap-btn.pos-left{right:0}
-.swap-btn.pos-right{left:0}
+/* keypad: one element, two sizes, slides between sides on the shared spring */
+.pad-tools{display:flex;justify-content:center;gap:10px;margin:14px 0 12px}
+.tool{width:44px;height:34px;border-radius:var(--r);background:var(--sub-alt);color:var(--sub);display:inline-flex;align-items:center;justify-content:center;transition:opacity .25s,color .15s}
+@media (hover:hover){.tool:hover{color:var(--main)}}
+.tool svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.tool svg *{transition:transform var(--spring-t) var(--spring);transform-origin:center;transform-box:fill-box}
+#side-btn.to-left svg path{transform:rotate(180deg)}
+#side-btn.off{opacity:.25;pointer-events:none}
+/* maximize arrows point out; when the pad is big each corner flips about its own centre so they point in */
+#zoom-btn.big .za{transform:rotate(180deg)}
+.pad-area{width:100%;container-type:inline-size}
+.pad{--pw:min(284px,100cqw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;user-select:none;-webkit-user-select:none;
+  width:var(--pw);transform:translateX(calc((100cqw - var(--pw)) / 2));
+  transition:width var(--spring-t) var(--spring),transform var(--spring-t) var(--spring)}
+.pad.compact{--pw:206px}
+.pad.compact.left{transform:translateX(0)}
+.pad.compact.right{transform:translateX(calc(100cqw - 206px))}
+.pad button{background:var(--sub-alt);color:var(--text);border-radius:var(--r);font-size:1.5rem;line-height:1.2;padding:16px 0;display:flex;align-items:center;justify-content:center;
+  transition:padding var(--spring-t) var(--spring),font-size var(--spring-t) var(--spring),background .12s,color .12s}
+.pad.compact button{font-size:1.25rem;padding:13px 0}
+.pad button.press{background:var(--main);color:var(--bg)}
+.pad .fn{color:var(--sub);font-size:1.1rem}
+.pad.compact .fn{font-size:.95rem}
+.pad .bksp svg{width:1.3em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- results ---------- */
 .res-score{text-align:center;font-size:4rem;color:var(--main);font-weight:700}
@@ -86,43 +137,43 @@ main{flex:1;display:flex;flex-direction:column;align-items:center;justify-conten
 .res-stats{display:flex;justify-content:center;gap:34px;margin-bottom:26px}
 .res-stats div{text-align:center}
 .res-stats .v{font-size:1.4rem;color:var(--text)}
-.res-stats .k{font-size:.65rem;color:var(--sub)}
 .res-actions{display:flex;justify-content:center;gap:14px}
-.res-actions button{color:var(--sub);font-size:.85rem;padding:8px 16px;border-radius:var(--r);transition:.15s}
+.res-actions button{color:var(--sub);font-size:.85rem;padding:8px 16px;border-radius:var(--r);transition:color .15s}
 .res-actions button:hover{color:var(--main)}
 .sess{margin-top:30px}
-.sess h3{color:var(--sub);font-size:.7rem;font-weight:400;text-transform:lowercase;margin-bottom:8px}
-.sess-row{display:flex;justify-content:space-between;color:var(--sub);font-size:.75rem;padding:5px 0;border-bottom:1px solid var(--sub-alt)}
-.sess-row .s{color:var(--text)}
-.sess-note{color:var(--sub);font-size:.62rem;font-family:var(--sans);font-weight:300;margin-top:8px}
 
 /* ---------- settings ---------- */
 .set-h{color:var(--main);font-size:.75rem;margin:22px 0 10px;text-transform:lowercase}
 .set-h:first-child{margin-top:0}
 .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
-.tcard{border-radius:var(--r);padding:10px 12px;font-size:.72rem;text-align:left;border:2px solid transparent;transition:.15s}
+.tcard{border-radius:var(--r);padding:10px 12px;font-size:.72rem;text-align:left;border:2px solid transparent;transition:border-color .15s}
 .tcard.on{border-color:var(--main)}
 .tcard .dots{display:flex;gap:4px;margin-top:6px}
 .tcard .dots i{width:9px;height:9px;border-radius:50%}
 /* numeral picker — the apple-clock style signature */
 .num-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ncard{background:var(--sub-alt);border-radius:var(--r);padding:14px 10px 10px;text-align:center;border:2px solid transparent;transition:.15s}
+.ncard{background:var(--sub-alt);border-radius:var(--r);padding:14px 10px 10px;text-align:center;border:2px solid transparent;transition:border-color .15s}
 .ncard.on{border-color:var(--main)}
 .ncard .big{font-size:1.9rem;letter-spacing:3px;color:var(--text);line-height:1.1}
 .ncard .nm{color:var(--sub);font-size:.62rem;margin-top:6px;font-family:var(--sans);font-weight:300}
 .seg{display:flex;background:var(--sub-alt);border-radius:var(--r);padding:4px;gap:4px}
-.seg button{flex:1;color:var(--sub);font-size:.72rem;padding:8px 4px;border-radius:6px;transition:.15s}
+.seg button{flex:1;color:var(--sub);font-size:.72rem;padding:8px 4px;border-radius:6px;transition:background .15s,color .15s}
 .seg button.on{background:var(--bg);color:var(--main)}
 .set-note{color:var(--sub);font-size:.64rem;font-family:var(--sans);font-weight:300;margin-top:6px}
+.set-note:empty{display:none}
 
 footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:12px;font-family:var(--sans);font-weight:300}
-footer b{color:var(--sub)}
+
+@media (prefers-reduced-motion:reduce){
+  :root{--spring-t:0s}
+  *,*::before,*::after{animation-duration:.001s!important;animation-delay:0s!important;animation-iteration-count:1!important}
+}
 </style>
 </head>
-<body>
+<body class="intro">
 
 <header>
-  <button class="logo" onclick="go('config')"><span class="tick">✓</span>mentalmath</button>
+  <button class="logo" onclick="go('config')"><span class="tick">✓</span><span class="word">leomac</span></button>
   <div class="spacer"></div>
   <button class="iconbtn" id="nav-config" onclick="go('config')" title="practice">∑</button>
   <button class="iconbtn" id="nav-settings" onclick="go('settings')" title="settings">⚙</button>
@@ -131,21 +182,42 @@ footer b{color:var(--sub)}
 
 <main>
 
-  <!-- CONFIG -->
+  <!-- HOME / CONFIG -->
   <section class="pane" id="pane-config">
-    <div class="cfg-row"><span class="chk on" data-op="add" onclick="toggleOp(this)">✓</span><span class="lbl">addition</span>
-      <span class="range">(<input type="number" id="a1" value="2"> to <input type="number" id="a2" value="100">) + (<input type="number" id="a3" value="2"> to <input type="number" id="a4" value="100">)</span></div>
-    <div class="cfg-row"><span class="chk on" data-op="sub" onclick="toggleOp(this)">✓</span><span class="lbl">subtraction</span>
-      <span class="range">addition in reverse</span></div>
-    <div class="cfg-row"><span class="chk on" data-op="mul" onclick="toggleOp(this)">✓</span><span class="lbl">multiplication</span>
-      <span class="range">(<input type="number" id="m1" value="2"> to <input type="number" id="m2" value="12">) × (<input type="number" id="m3" value="2"> to <input type="number" id="m4" value="100">)</span></div>
-    <div class="cfg-row"><span class="chk on" data-op="div" onclick="toggleOp(this)">✓</span><span class="lbl">division</span>
-      <span class="range">multiplication in reverse</span></div>
-    <div class="durs" id="durs">
+    <div class="stats rise" style="--i:0">
+      <div>
+        <div class="k">personal best · <span id="pb-dur">120s</span></div>
+        <div class="pb-v" id="pb-v">–</div>
+      </div>
+      <div class="mini">
+        <div><div class="v" id="st-runs">0</div><div class="k">runs</div></div>
+        <div><div class="v" id="st-avg">–</div><div class="k">avg · last 10</div></div>
+        <div><div class="v" id="st-acc">–</div><div class="k">accuracy</div></div>
+      </div>
+    </div>
+    <div class="spark-wrap rise" style="--i:1">
+      <svg id="spark" aria-label="score trend"></svg>
+      <div class="spark-tip" id="spark-tip"></div>
+      <p class="spark-empty" id="spark-empty">finish a couple of runs to see your trend</p>
+    </div>
+    <div class="cfg">
+      <div class="cfg-row rise" style="--i:2"><span class="chk on" data-op="add" onclick="toggleOp(this)">✓</span><span class="lbl">addition</span>
+        <span class="range">(<input type="number" id="a1" value="2"> to <input type="number" id="a2" value="100">) + (<input type="number" id="a3" value="2"> to <input type="number" id="a4" value="100">)</span></div>
+      <div class="cfg-row rise" style="--i:3"><span class="chk on" data-op="sub" onclick="toggleOp(this)">✓</span><span class="lbl">subtraction</span>
+        <span class="range">addition in reverse</span></div>
+      <div class="cfg-row rise" style="--i:4"><span class="chk on" data-op="mul" onclick="toggleOp(this)">✓</span><span class="lbl">multiplication</span>
+        <span class="range">(<input type="number" id="m1" value="2"> to <input type="number" id="m2" value="12">) × (<input type="number" id="m3" value="2"> to <input type="number" id="m4" value="100">)</span></div>
+      <div class="cfg-row rise" style="--i:5"><span class="chk on" data-op="div" onclick="toggleOp(this)">✓</span><span class="lbl">division</span>
+        <span class="range">multiplication in reverse</span></div>
+    </div>
+    <div class="durs rise" style="--i:6" id="durs">
       <button data-d="30">30s</button><button data-d="60">60s</button><button data-d="120" class="on">120s</button><button data-d="300">300s</button>
     </div>
-    <button class="start" onclick="startGame()">start</button>
-    <p class="hint">answers submit automatically — no enter key, no friction</p>
+    <button class="start rise" style="--i:7" onclick="startGame()">start</button>
+    <div class="recent rise" style="--i:8" id="recent">
+      <h3>recent runs</h3>
+      <div id="recent-list"></div>
+    </div>
   </section>
 
   <!-- GAME -->
@@ -157,8 +229,15 @@ footer b{color:var(--sub)}
     </div>
     <div class="answer-ghost" id="ghost-wrap" style="display:none"><span id="ghost"></span><span class="caret"></span></div>
     <div class="pad-area" id="pad-area" style="display:none">
-      <button class="swap-btn" id="swap-btn" style="display:none" onclick="swapSide()">⇄ swap side</button>
-      <div class="pad full" id="pad"></div>
+      <div class="pad-tools">
+        <button class="tool" id="side-btn" onclick="swapSide()" title="move pad to the other side" aria-label="move pad to the other side">
+          <svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
+        </button>
+        <button class="tool" id="zoom-btn" onclick="toggleBig()" title="shrink / enlarge pad" aria-label="shrink or enlarge pad">
+          <svg viewBox="0 0 24 24"><g class="za"><path d="M15 3h6v6"/><path d="M21 3l-7 7"/></g><g class="za"><path d="M9 21H3v-6"/><path d="M3 21l7-7"/></g></svg>
+        </button>
+      </div>
+      <div class="pad" id="pad"></div>
     </div>
   </section>
 
@@ -189,19 +268,14 @@ footer b{color:var(--sub)}
 
     <div class="set-h">number style</div>
     <div class="num-grid" id="numerals"></div>
-    <p class="set-note">changes how problems are displayed, apple lock-screen style. you always type on a western keypad.</p>
+    <p class="set-note">changes how problems, answers and the on-screen pad are displayed, apple lock-screen style.</p>
 
     <div class="set-h">keypad</div>
     <div class="seg" id="kbd-seg">
       <button data-k="native">native keyboard</button>
       <button data-k="pad">on-screen pad</button>
-      <button data-k="one">one-hand pad</button>
     </div>
-    <div class="seg" id="side-seg" style="margin-top:8px">
-      <button data-s="right" class="on">one-hand: right</button>
-      <button data-s="left">one-hand: left</button>
-    </div>
-    <p class="set-note">on-screen pad is centered. one-hand pad hugs a side for thumb reach — tap ⇄ during play or pick here.</p>
+    <p class="set-note">during play, the window button shrinks the pad to one side for thumb reach and the arrow moves it across.</p>
 
     <div class="set-h">font</div>
     <div class="seg" id="font-seg">
@@ -219,16 +293,17 @@ footer b{color:var(--sub)}
         <button onclick="signIn()" style="background:var(--sub-alt);color:var(--main);padding:9px 14px;border-radius:var(--r);font-size:.8rem">sign in</button>
         <button onclick="signUp()" style="color:var(--sub);padding:9px 10px;font-size:.75rem">create account (first time)</button>
       </div>
-      <p class="set-note" id="auth-note">sign in once per device — you stay signed in after that.</p>
+      <p class="set-note" id="auth-note"></p>
     </div>
     <div id="auth-signed" style="display:none">
       <p class="set-note" id="auth-who"></p>
+      <p class="set-note">theme, number style, font and duration are saved to your account.</p>
       <button onclick="signOut()" style="color:var(--sub);font-size:.75rem;padding:6px 0">sign out</button>
     </div>
   </section>
 
 </main>
-<footer>v0.2 — zetamac loop × monkeytype skin × supabase sync</footer>
+<footer>v0.3</footer>
 
 <script>
 /* ---------------- themes (palettes from monkeytype theme file) ---------------- */
@@ -249,11 +324,29 @@ const NUMSYS={
   devanagari:{name:"Devanagari",digits:"०१२३४५६७८९"},
   bangla:{name:"Bangla",digits:"০১২৩৪৫৬৭৮৯"},
 };
-const OPSYM={western:{p:"+",m:"−",x:"×",d:"÷"},default:{p:"+",m:"−",x:"×",d:"÷"}};
 
-const S={theme:"serika_dark",numsys:"western",kbd:"native",side:"right",font:"mono",dur:120};
+/* touch-first devices default to the on-screen pad */
+const COARSE=window.matchMedia&&matchMedia("(pointer: coarse)").matches;
+const S={theme:"serika_dark",numsys:"western",kbd:COARSE?"pad":"native",side:"right",big:true,font:"mono",dur:120};
 const ops={add:true,sub:true,mul:true,div:true};
-let game=null, sessions=[];
+let game=null, sessions=[], hist=[];
+
+/* ---------------- preferences ----------------
+   look & feel follows the account (user_metadata.prefs); input setup stays per device */
+const SYNC_KEYS=["theme","numsys","font","dur"], DEV_KEYS=["kbd","side","big"];
+const VALID={theme:v=>v in THEMES,numsys:v=>v in NUMSYS,font:v=>v==="mono"||v==="sans",dur:v=>[30,60,120,300].includes(v),
+  kbd:v=>v==="native"||v==="pad",side:v=>v==="left"||v==="right",big:v=>typeof v==="boolean"};
+function mergePrefs(p,keys){ if(p&&typeof p==="object")keys.forEach(k=>{ if(k in p&&VALID[k](p[k]))S[k]=p[k]; }); }
+function pick(keys){ const o={};keys.forEach(k=>o[k]=S[k]);return o; }
+function lsGet(k){ try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;} }
+function lsSet(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+let cloudTimer=null;
+function savePrefs(){
+  lsSet("leomac.prefs",pick(SYNC_KEYS));lsSet("leomac.device",pick(DEV_KEYS));
+  if(!sb||!sbUser)return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>sb.auth.updateUser({data:{prefs:pick(SYNC_KEYS)}}).catch(e=>console.warn("prefs sync failed",e)),500);
+}
 
 /* ---------------- supabase (cloud sync, fail-soft) ---------------- */
 const SB_URL="https://bkshogsmqrwfoctoihqg.supabase.co";
@@ -269,12 +362,24 @@ function setCloud(on,who){
   document.getElementById("auth-signed").style.display=on?"block":"none";
   if(on)document.getElementById("auth-who").textContent="signed in as "+who;
 }
-async function initAuth(){
+function initAuth(){
   if(!sb)return;
-  const {data}=await sb.auth.getSession();
-  sbUser=data.session?.user||null;
-  setCloud(!!sbUser,sbUser?.email||"");
-  sb.auth.onAuthStateChange((_e,s)=>{ sbUser=s?.user||null; setCloud(!!sbUser,sbUser?.email||""); });
+  sb.auth.onAuthStateChange((ev,s)=>{
+    sbUser=s?.user||null;
+    setCloud(!!sbUser,sbUser?.email||"");
+    /* defer: supabase calls inside this callback can deadlock */
+    if(ev==="INITIAL_SESSION"||ev==="SIGNED_IN"||ev==="SIGNED_OUT")setTimeout(onUserReady,0);
+  });
+}
+async function onUserReady(){
+  if(sbUser){
+    /* getUser hits the server, so prefs changed on another device win over the cached session */
+    const {data}=await sb.auth.getUser().catch(()=>({data:null}));
+    const p=data?.user?.user_metadata?.prefs;
+    if(p){mergePrefs(p,SYNC_KEYS);applyAll();lsSet("leomac.prefs",pick(SYNC_KEYS));}
+    else savePrefs();
+  }
+  await loadHistory();
 }
 async function signIn(){
   const email=document.getElementById("auth-email").value.trim();
@@ -307,10 +412,28 @@ async function allTimeBest(dur){
   return data[0].score;
 }
 
+/* ---------------- run history (cloud when signed in, this device otherwise) ---------------- */
+function localRuns(){ const r=lsGet("leomac.runs");return Array.isArray(r)?r:[]; }
+async function loadHistory(){
+  hist=localRuns();
+  if(sb&&sbUser){
+    const {data,error}=await sb.from("runs").select("created_at,duration_s,score,first_try_accuracy")
+      .order("created_at",{ascending:false}).limit(300);
+    if(!error&&data)hist=data.map(r=>({at:r.created_at,dur:r.duration_s,score:r.score,acc:r.first_try_accuracy==null?null:+r.first_try_accuracy}));
+  }
+  renderHome();
+}
+function recordRun(r){
+  lsSet("leomac.runs",[r,...localRuns()].slice(0,300));
+  hist.unshift(r);
+}
+
 /* ---------------- helpers ---------------- */
 const $=id=>document.getElementById(id);
 function toNum(n,sys){const d=NUMSYS[sys].digits;return String(n).split("").map(c=>/\d/.test(c)?d[+c]:c).join("");}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString([], {month:"short",day:"numeric"}).toLowerCase();}
+function fmtTime(iso){return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});}
 
 function go(p){
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("show"));
@@ -318,7 +441,67 @@ function go(p){
   $("nav-config").classList.toggle("active",p==="config");
   $("nav-settings").classList.toggle("active",p==="settings");
   if(game&&p!=="game"){clearInterval(game.tick);game=null;}
+  if(p==="config")renderHome();
 }
+
+/* ---------------- home ---------------- */
+let lastPb={};
+function renderHome(){
+  const atDur=hist.filter(r=>r.dur===S.dur);
+  const pb=atDur.length?Math.max(...atDur.map(r=>r.score)):null;
+  const pbEl=$("pb-v");
+  $("pb-dur").textContent=S.dur+"s";
+  pbEl.textContent=pb===null?"–":pb;
+  if(pb!==null&&lastPb[S.dur]!==undefined&&pb>lastPb[S.dur]){pbEl.classList.remove("new");void pbEl.offsetWidth;pbEl.classList.add("new");}
+  lastPb[S.dur]=pb===null?undefined:pb;
+  const last10=atDur.slice(0,10);
+  $("st-runs").textContent=atDur.length;
+  $("st-avg").textContent=last10.length?(last10.reduce((a,r)=>a+r.score,0)/last10.length).toFixed(1):"–";
+  const accs=last10.map(r=>r.acc).filter(a=>a!=null);
+  $("st-acc").textContent=accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length)+"%":"–";
+  drawSpark(atDur.slice(0,20).reverse(),pb);
+  /* best per duration, to tag record runs in the list */
+  const best={};hist.forEach(r=>{best[r.dur]=Math.max(best[r.dur]??-1,r.score);});
+  const recent=hist.slice(0,5);
+  $("recent").style.display=recent.length?"block":"none";
+  $("recent-list").innerHTML=recent.map(r=>
+    `<div class="sess-row"><span>${fmtDate(r.at)} · ${fmtTime(r.at)} · ${r.dur}s</span><span><span class="s">${r.score}</span>${r.acc!=null?" · "+Math.round(r.acc)+"%":""}${r.score===best[r.dur]&&r.score>0?'<span class="tag">pb</span>':""}</span></div>`).join("");
+}
+let sparkPts=[];
+function drawSpark(runs,pb){
+  const svg=$("spark"),empty=$("spark-empty");
+  $("spark-tip").classList.remove("show");
+  if(runs.length<2){svg.innerHTML="";sparkPts=[];empty.style.display="flex";return;}
+  empty.style.display="none";
+  const W=svg.clientWidth||300,H=58,pad=6;
+  const lo=Math.min(...runs.map(r=>r.score)),hi=Math.max(...runs.map(r=>r.score)),span=Math.max(hi-lo,1);
+  sparkPts=runs.map((r,i)=>({r,x:pad+i*(W-2*pad)/(runs.length-1),y:pad+(1-(r.score-lo)/span)*(H-2*pad)}));
+  const d=sparkPts.map((p,i)=>(i?"L":"M")+p.x.toFixed(1)+" "+p.y.toFixed(1)).join(" ");
+  const pbY=pad+(1-(pb-lo)/span)*(H-2*pad);
+  const end=sparkPts[sparkPts.length-1];
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=
+    `<line x1="0" x2="${W}" y1="${pbY}" y2="${pbY}" stroke="var(--sub)" stroke-width="1" stroke-dasharray="2 4" opacity=".6"/>`+
+    `<path d="${d}" fill="none" stroke="var(--main)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${end.x}" cy="${end.y}" r="4" fill="var(--main)" stroke="var(--bg)" stroke-width="2"/>`+
+    `<circle id="spark-dot" r="5" fill="var(--main)" stroke="var(--bg)" stroke-width="2" style="display:none"/>`;
+}
+function sparkHover(e){
+  if(!sparkPts.length)return;
+  const box=$("spark").getBoundingClientRect(),x=e.clientX-box.left;
+  const p=sparkPts.reduce((a,b)=>Math.abs(b.x-x)<Math.abs(a.x-x)?b:a);
+  const dot=$("spark-dot");dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.style.display="";
+  const tip=$("spark-tip");
+  tip.innerHTML=`${p.r.score} <span>· ${fmtDate(p.r.at)}${p.r.acc!=null?" · "+Math.round(p.r.acc)+"%":""}</span>`;
+  tip.style.left=Math.min(Math.max(p.x,40),box.width-40)+"px";
+  tip.classList.add("show");
+}
+function sparkLeave(){ $("spark-tip").classList.remove("show");const d=$("spark-dot");if(d)d.style.display="none"; }
+$("spark").addEventListener("pointermove",sparkHover);
+$("spark").addEventListener("pointerdown",sparkHover);
+$("spark").addEventListener("pointerleave",e=>{ if(e.pointerType==="mouse")sparkLeave(); });
+document.addEventListener("pointerdown",e=>{ if(!e.target.closest("#spark"))sparkLeave(); });
+window.addEventListener("resize",()=>{ if($("pane-config").classList.contains("show"))renderHome(); });
 
 /* ---------------- config ---------------- */
 function toggleOp(el){
@@ -328,8 +511,9 @@ function toggleOp(el){
 $("durs").addEventListener("click",e=>{
   if(!e.target.dataset.d)return;
   S.dur=+e.target.dataset.d;
-  document.querySelectorAll("#durs button").forEach(b=>b.classList.toggle("on",b===e.target));
+  syncDurUI();savePrefs();renderHome();
 });
+function syncDurUI(){ document.querySelectorAll("#durs button").forEach(b=>b.classList.toggle("on",+b.dataset.d===S.dur)); }
 
 /* ---------------- game loop (zetamac-faithful) ---------------- */
 function makeProblem(){
@@ -359,7 +543,8 @@ function startGame(){
   },1000);
   if(S.kbd==="native")setTimeout(()=>$("answer").focus(),50);
 }
-function clearAnswer(){game.buf="";$("answer").value="";$("ghost").textContent="";}
+function renderGhost(){ $("ghost").textContent=toNum(game?game.buf:"",S.numsys); }
+function clearAnswer(){game.buf="";$("answer").value="";renderGhost();}
 function checkBuf(){
   if(game.buf===""||isNaN(+game.buf))return;
   if(+game.buf===game.p.ans){
@@ -383,10 +568,10 @@ $("answer").addEventListener("input",e=>{
 });
 function padPress(k){
   if(!game)return;
-  if(k==="⌫")game.buf=game.buf.slice(0,-1);
+  if(k==="back")game.buf=game.buf.slice(0,-1);
   else if(k==="C")game.buf="";
   else game.buf+=k;
-  $("ghost").textContent=toNum(game.buf,"western");
+  renderGhost();
   checkBuf();
 }
 function endGame(){
@@ -397,9 +582,10 @@ function endGame(){
   const run={
     duration_s:dur,score:game.score,
     first_try_accuracy:acc,avg_ms_per_problem:avgMs,
-    config:{ops:{...ops},add:[+$("a1").value,+$("a2").value,+$("a3").value,+$("a4").value],mul:[+$("m1").value,+$("m2").value,+$("m3").value,+$("m4").value],numsys:S.numsys,kbd:S.kbd},
+    config:{ops:{...ops},add:[+$("a1").value,+$("a2").value,+$("a3").value,+$("a4").value],mul:[+$("m1").value,+$("m2").value,+$("m3").value,+$("m4").value],numsys:S.numsys,kbd:S.kbd==="pad"?(S.big?"pad":"one"):"native"},
     problems:game.problems
   };
+  recordRun({at:new Date().toISOString(),dur,score:game.score,acc});
   sessions.unshift({score:game.score,dur,at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
   $("r-score").textContent=game.score;
   $("r-best").textContent=Math.max(...sessions.map(s=>s.score));
@@ -425,44 +611,47 @@ function endGame(){
   });
 }
 
-/* ---------------- keypad modes ---------------- */
-const PADKEYS=["7","8","9","4","5","6","1","2","3","C","0","⌫"];
-function applyKbd(){
+/* ---------------- keypad ---------------- */
+const PADKEYS=["7","8","9","4","5","6","1","2","3","C","0","back"];
+const BKSP_SVG='<svg viewBox="0 0 26 20" aria-hidden="true"><path d="M8 2h15a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H8l-7-8z"/><path d="M12 7l6 6M18 7l-6 6"/></svg>';
+function buildPad(){
   const pad=$("pad");
-  const area=$("pad-area");
-  const swap=$("swap-btn");
-  const usePad=S.kbd!=="native";
+  PADKEYS.forEach(k=>{
+    const b=document.createElement("button");
+    b.dataset.k=k;
+    if(k==="C"){b.className="fn";b.textContent="C";}
+    else if(k==="back"){b.className="fn bksp";b.innerHTML=BKSP_SVG;b.setAttribute("aria-label","backspace");}
+    b.addEventListener("pointerdown",e=>{e.preventDefault();padPress(k);});
+    pad.appendChild(b);
+  });
+  labelPad();
+}
+function labelPad(){ document.querySelectorAll("#pad button").forEach(b=>{ if(/^\d$/.test(b.dataset.k))b.textContent=toNum(b.dataset.k,S.numsys); }); }
+function applyKbd(){
+  const usePad=S.kbd==="pad";
   $("native-wrap").style.display=usePad?"none":"flex";
   $("ghost-wrap").style.display=usePad?"flex":"none";
-  area.style.display=usePad?"block":"none";
-  const isOne=S.kbd==="one";
-  pad.className="pad "+(isOne?"one "+S.side:"full");
-  /* swap button only for one-hand mode */
-  swap.style.display=isOne?"block":"none";
-  swap.className="swap-btn pos-"+S.side;
-  if(usePad&&!pad.childElementCount){
-    PADKEYS.forEach(k=>{
-      const b=document.createElement("button");
-      b.textContent=k;if(k==="C"||k==="⌫")b.className="fn";
-      b.addEventListener("pointerdown",e=>{e.preventDefault();padPress(k);});
-      pad.appendChild(b);
-    });
-  }
+  $("pad-area").style.display=usePad?"block":"none";
+  applyPadLayout();
 }
-function swapSide(){
-  S.side=S.side==="right"?"left":"right";
-  applyKbd();
-  document.querySelectorAll("#side-seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===S.side));
+/* big = centered full pad; compact = small pad hugging S.side. zooming back out restores the side */
+function applyPadLayout(){
+  const pad=$("pad");
+  pad.classList.toggle("compact",!S.big);
+  pad.classList.toggle("left",S.side==="left");
+  pad.classList.toggle("right",S.side==="right");
+  const side=$("side-btn");
+  side.classList.toggle("off",S.big);
+  side.classList.toggle("to-left",S.side==="right");
+  $("zoom-btn").classList.toggle("big",S.big);
 }
+function swapSide(){ if(S.big)return; S.side=S.side==="right"?"left":"right"; applyPadLayout(); savePrefs(); }
+function toggleBig(){ S.big=!S.big; applyPadLayout(); savePrefs(); }
 $("kbd-seg").addEventListener("click",e=>{
   if(!e.target.dataset.k)return;S.kbd=e.target.dataset.k;
-  document.querySelectorAll("#kbd-seg button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.kbd));
+  syncKbdUI();savePrefs();
 });
-$("side-seg").addEventListener("click",e=>{
-  if(!e.target.dataset.s)return;S.side=e.target.dataset.s;
-  document.querySelectorAll("#side-seg button").forEach(b=>b.classList.toggle("on",b.dataset.s===S.side));
-  if(game)applyKbd();
-});
+function syncKbdUI(){ document.querySelectorAll("#kbd-seg button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.kbd)); }
 
 /* ---------------- theme + numerals + font ---------------- */
 function applyTheme(){
@@ -477,29 +666,60 @@ function buildThemes(){
       <span class="dots"><i style="background:${t.main}"></i><i style="background:${t.sub}"></i><i style="background:${t.text}"></i></span>
     </button>`).join("");
   $("themes").addEventListener("click",e=>{
-    const c=e.target.closest(".tcard");if(!c)return;S.theme=c.dataset.t;applyTheme();
+    const c=e.target.closest(".tcard");if(!c)return;S.theme=c.dataset.t;applyTheme();savePrefs();
   });
+}
+function applyNumsys(){
+  document.querySelectorAll(".ncard").forEach(x=>x.classList.toggle("on",x.dataset.n===S.numsys));
+  labelPad();
+  if(game){renderProblem();renderGhost();}
 }
 function buildNumerals(){
   $("numerals").innerHTML=Object.entries(NUMSYS).map(([k,n])=>
     `<button class="ncard" data-n="${k}"><div class="big">${toNum("0123456789",k).slice(0,6)}</div><div class="nm">${n.name}</div></button>`).join("");
   $("numerals").addEventListener("click",e=>{
     const c=e.target.closest(".ncard");if(!c)return;S.numsys=c.dataset.n;
-    document.querySelectorAll(".ncard").forEach(x=>x.classList.toggle("on",x.dataset.n===S.numsys));
-    if(game)renderProblem();
+    applyNumsys();savePrefs();
   });
-  document.querySelector('.ncard[data-n="western"]').classList.add("on");
+}
+function applyFont(){
+  document.body.style.fontFamily=S.font==="mono"?"var(--mono)":"var(--sans)";
+  document.querySelectorAll("#font-seg button").forEach(b=>b.classList.toggle("on",b.dataset.f===S.font));
 }
 $("font-seg").addEventListener("click",e=>{
   if(!e.target.dataset.f)return;S.font=e.target.dataset.f;
-  document.body.style.fontFamily=S.font==="mono"?"var(--mono)":"var(--sans)";
-  document.querySelectorAll("#font-seg button").forEach(b=>b.classList.toggle("on",b.dataset.f===S.font));
+  applyFont();savePrefs();
 });
+function applyAll(){
+  applyTheme();applyNumsys();applyFont();syncDurUI();syncKbdUI();applyPadLayout();
+  if($("pane-config").classList.contains("show"))renderHome();
+}
+
+/* ---------------- bouncy buttons ---------------- */
+let pressed=null;
+document.addEventListener("pointerdown",e=>{
+  const b=e.target.closest("button,.chk");
+  if(!b)return;
+  b.classList.remove("boing");b.classList.add("press");pressed=b;
+});
+function release(){
+  if(!pressed)return;
+  const b=pressed;pressed=null;
+  b.classList.remove("press");void b.offsetWidth;b.classList.add("boing");
+}
+document.addEventListener("pointerup",release);
+document.addEventListener("pointercancel",release);
+document.addEventListener("animationend",e=>{ if(e.animationName==="boing")e.target.classList.remove("boing"); });
 
 /* ---------------- init ---------------- */
-buildThemes();buildNumerals();applyTheme();initAuth();
-document.querySelector('#kbd-seg [data-k="native"]').classList.add("on");
+mergePrefs(lsGet("leomac.prefs"),SYNC_KEYS);
+mergePrefs(lsGet("leomac.device"),DEV_KEYS);
+buildThemes();buildNumerals();buildPad();
 go("config");
+applyAll();
+loadHistory();
+initAuth();
+setTimeout(()=>document.body.classList.remove("intro"),1800);
 </script>
 </body>
 </html>
