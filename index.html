@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>leomac</title>
+<!-- relative path: scoped to /leomac, so other github pages sites on this account keep their own icon -->
+<link rel="icon" type="image/png" href="favicon.png" id="favicon">
+<link rel="apple-touch-icon" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend+Deca:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1176,6 +1179,26 @@ function applyTheme(){
   r.setProperty("--bg",t.bg);r.setProperty("--main",t.main);r.setProperty("--caret",t.main);
   r.setProperty("--sub",t.sub);r.setProperty("--sub-alt",t.subAlt);r.setProperty("--text",t.text);r.setProperty("--error",t.error);
   document.querySelectorAll(".tcard").forEach(c=>c.classList.toggle("on",c.dataset.t===S.theme));
+  drawFavicon();
+}
+/* the tab icon is the logo cut down to "lm" and a bigger tick, in the current theme's colours */
+function faviconCanvas(t,size){
+  const c=document.createElement("canvas");c.width=c.height=size;
+  const x=c.getContext("2d"), u=size/64;
+  x.scale(u,u);
+  x.fillStyle=t.bg;x.beginPath();x.roundRect?x.roundRect(0,0,64,64,14):x.rect(0,0,64,64);x.fill();
+  x.strokeStyle=t.main;x.lineWidth=5.5;x.lineCap=x.lineJoin="round";
+  x.beginPath();x.moveTo(8,17);x.lineTo(14,23.5);x.lineTo(25,9);x.stroke();
+  x.fillStyle=t.text;x.font="700 37px 'JetBrains Mono',monospace";x.textAlign="center";x.textBaseline="alphabetic";
+  x.fillText("lm",34.5,55);
+  return c;
+}
+function drawFavicon(){
+  const t=THEMES[S.theme];
+  document.fonts.load("700 37px 'JetBrains Mono'").catch(()=>{}).then(()=>{
+    if(THEMES[S.theme]!==t)return;
+    try{ $("favicon").href=faviconCanvas(t,64).toDataURL("image/png"); }catch(e){}
+  });
 }
 function buildThemes(){
   $("themes").innerHTML=Object.entries(THEMES).map(([k,t])=>
