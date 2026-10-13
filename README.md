@@ -15,8 +15,10 @@ I practice mental math for quant-finanace interview prep. [Zetamac](https://arit
 - Monkeytype theme system through CSS custom properties
 - Alternative numeral display (Western, Eastern Arabic, Devanagari, Bangla) because I like eastern arabic and other cool alternative number systems
 - Two input modes: native keyboard or an on-screen pad (the default on touch devices). During play the pad shrinks to one side for one-hand reach and slides between sides; its digits follow the selected numeral system.
-- Home screen shows your personal best for the selected duration, a score trend, and recent runs.
-- Theme, numeral system, font and duration are saved to your account and follow you across devices.
+- A mode is the set of operations, their ranges and a duration. The home screen shows the trend for the selected mode (personal best, score chart, average of the last 10, accuracy) above the mode picker and the start button. Ranges sit behind a sheet so the home screen stays quiet.
+- Press Tab to start a new run in the same mode (from home, results, or mid-run); Esc quits a run.
+- A size slider in settings scales all text and buttons.
+- Theme, numeral system, font, mode and ranges are saved to your account and follow you across devices.
 - Cross-device sync. Each run stores score, first-try accuracy, average solve time, the run config, and per-problem timing.
 
 ## Tech

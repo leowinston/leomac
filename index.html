@@ -8,10 +8,14 @@
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lexend+Deca:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+/* every size is in rem so the settings size slider (html font-size) scales the whole app */
 :root{
   --bg:#323437; --main:#e2b714; --caret:#e2b714; --sub:#646669; --sub-alt:#2c2e31; --text:#d1d0c5; --error:#ca4754;
   --mono:'JetBrains Mono',monospace; --sans:'Lexend Deca',sans-serif;
-  --r:8px;
+  /* type scale: label · body · stat · glyph · hero */
+  --fs-1:.75rem; --fs-2:.9375rem; --fs-3:1.25rem; --fs-4:1.75rem; --fs-hero:3.5rem;
+  --r:.625rem; --r-lg:1rem;
+  --w:34rem;
   /* one spring for every moving thing: pad slide, pad zoom, icon flips */
   --spring:cubic-bezier(.34,1.56,.64,1);
   --spring-t:.6s;
@@ -21,159 +25,208 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;flex-direction:column;transition:background .25s,color .25s;overflow:hidden}
-button{font-family:inherit;border:none;background:none;color:inherit;cursor:pointer;touch-action:manipulation}
-input{font-family:inherit}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:var(--fs-2);line-height:1.4;display:flex;flex-direction:column;transition:background .25s,color .25s;overflow:hidden}
+button{font:inherit;border:none;background:none;color:inherit;cursor:pointer;touch-action:manipulation}
+input{font:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--main);outline-offset:2px}
+.label{font-size:var(--fs-1);color:var(--sub);letter-spacing:.02em;white-space:nowrap}
+svg.i{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:block}
 
 /* ---------- bouncy press (class-driven so it works on iOS too) ---------- */
-.press{transform:scale(.92)!important;transition:transform .07s ease-out!important}
+.press{transform:scale(.94)!important;transition:transform .07s ease-out!important}
 .boing{animation:boing .45s cubic-bezier(.3,.7,.4,1)}
-@keyframes boing{0%{transform:scale(.92)}35%{transform:scale(1.06)}60%{transform:scale(.98)}80%{transform:scale(1.015)}100%{transform:scale(1)}}
+@keyframes boing{0%{transform:scale(.94)}35%{transform:scale(1.05)}60%{transform:scale(.98)}80%{transform:scale(1.01)}100%{transform:scale(1)}}
+.flash-wrong{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-.3rem)}75%{transform:translateX(.3rem)}}
 
 /* ---------- top bar ---------- */
-header{display:flex;align-items:center;gap:14px;padding:16px 20px;flex-shrink:0}
-.logo{font-weight:700;font-size:1.15rem;color:var(--text);letter-spacing:-.5px;display:flex;align-items:baseline;gap:2px}
-.logo .tick{color:var(--main);font-size:.7rem;transform:translateY(-8px);display:inline-block}
-.iconbtn{color:var(--sub);font-size:.95rem;padding:6px;transition:color .15s}
-.iconbtn:hover,.iconbtn.active{color:var(--main)}
+header{display:flex;align-items:center;gap:.25rem;padding:.75rem 1rem;flex-shrink:0}
+.logo{font-weight:700;font-size:var(--fs-3);letter-spacing:-.03em;display:flex;align-items:baseline;gap:.125rem;padding:.25rem}
+.logo .tick{color:var(--main);font-size:.75rem;transform:translateY(-.5rem);display:inline-block}
+.sync{color:var(--sub);font-size:1.125rem;width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center;border-radius:var(--r);transition:color .2s}
+.sync .slash{transition:opacity .2s}
+.sync.on{color:var(--main)}
+.sync.on .slash{opacity:0}
 header .spacer{flex:1}
+.iconbtn{color:var(--sub);font-size:1.5rem;width:3rem;height:3rem;display:flex;align-items:center;justify-content:center;border-radius:var(--r);transition:color .15s}
+.iconbtn.active{color:var(--main)}
+@media (hover:hover){.iconbtn:hover,.sync:hover{color:var(--main)}}
 
 /* ---------- panes ---------- */
 /* auto margins centre a pane that fits and top-align one that overflows (justify-content:center would clip its top) */
-main{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 18px;overflow-y:auto}
-.pane{display:none;width:100%;max-width:560px;margin:auto 0;animation:rise .35s cubic-bezier(.2,.8,.2,1)}
+main{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 1rem;overflow-y:auto}
+.pane{display:none;width:100%;max-width:var(--w);margin:auto 0;padding:.5rem 0 1.5rem;animation:rise .35s cubic-bezier(.2,.8,.2,1)}
 .pane.show{display:block}
-#pane-config,#pane-settings{padding:8px 0 18px}
-@keyframes rise{from{opacity:0;transform:translateY(8px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@keyframes rise{from{opacity:0;transform:translateY(.5rem);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
 
 /* ---------- intro: logo types itself, tick pops, content rises ---------- */
 body.intro .logo .word{animation:type .42s steps(6,end) .1s both}
 body.intro .logo .tick{animation:pop .6s var(--spring) .55s both}
-body.intro header .iconbtn{animation:fadein .5s ease .6s both}
-body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 55ms + .55s)}
-body.intro footer{animation:fadein .6s ease 1s both}
+body.intro header .iconbtn,body.intro header .sync{animation:fadein .5s ease .6s both}
+body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 60ms + .55s)}
 @keyframes type{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-@keyframes pop{from{opacity:0;transform:translateY(-8px) scale(0)}to{opacity:1;transform:translateY(-8px) scale(1)}}
+@keyframes pop{from{opacity:0;transform:translateY(-.5rem) scale(0)}to{opacity:1;transform:translateY(-.5rem) scale(1)}}
 @keyframes fadein{from{opacity:0}}
 
-/* ---------- home: stats ---------- */
-.stats{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
-.k{font-size:.65rem;color:var(--sub)}
-.pb-v{font-size:3.2rem;font-weight:700;color:var(--main);line-height:1;margin-top:4px}
-.pb-v.new{animation:boing .6s cubic-bezier(.3,.7,.4,1)}
-.mini{display:flex;gap:18px;text-align:right}
-.mini .v{font-size:1.05rem;color:var(--text)}
-.spark-wrap{position:relative;height:58px;margin-bottom:10px}
+/* ---------- home ---------- */
+#pane-config.show{display:flex;flex-direction:column;gap:2rem}
+/* phones: trend up top, mode + start down where the thumb is */
+@media (max-width:40rem){
+  #pane-config.show{flex:1 0 auto;margin:0;gap:1.25rem;padding-bottom:calc(1rem + env(safe-area-inset-bottom))}
+  #pane-config .controls{margin-top:auto}
+  #pane-config .chart{height:5.5rem;margin:.75rem 0}
+  #pane-config .op{height:3.5rem}
+}
+.trend-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.5rem}
+.trend-head .mode{color:var(--text)}
+.hero{font-size:var(--fs-hero);font-weight:700;color:var(--main);line-height:1;font-variant-numeric:tabular-nums}
+.hero.empty{color:var(--sub)}
+.hero.new{animation:boing .6s cubic-bezier(.3,.7,.4,1)}
+.chart{position:relative;height:7rem;margin:1rem 0}
 #spark{width:100%;height:100%;display:block;overflow:visible;touch-action:pan-y}
-.spark-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.68rem;font-family:var(--sans);font-weight:300;border:1px dashed var(--sub-alt);border-radius:var(--r)}
-.spark-tip{position:absolute;top:-6px;transform:translate(-50%,-100%);background:var(--sub-alt);color:var(--text);font-size:.65rem;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s}
-.spark-tip.show{opacity:1}
-.spark-tip span{color:var(--sub)}
+.chart-empty{position:absolute;inset:0;display:flex;flex-direction:column;gap:.375rem;align-items:center;justify-content:center;text-align:center;color:var(--sub);font-size:var(--fs-1);border:1px dashed var(--sub-alt);border-radius:var(--r);padding:0 1rem}
+.chart-empty button{color:var(--main);font-size:var(--fs-1)}
+.tip{position:absolute;top:-.5rem;transform:translate(-50%,-100%);background:var(--sub-alt);color:var(--text);font-size:var(--fs-1);padding:.25rem .5rem;border-radius:.375rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .12s}
+.tip.show{opacity:1}
+.tip span{color:var(--sub)}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+.stats3 .label{white-space:normal}
+.stats3 .v{font-size:var(--fs-3);color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums}
+.trend.swap{animation:rise .35s cubic-bezier(.2,.8,.2,1)}
 
-/* ---------- config (home) ---------- */
-.cfg{border-top:1px solid var(--sub-alt);margin-top:4px}
-.cfg-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--sub-alt);font-size:.85rem}
-.cfg-row:last-of-type{border-bottom:none}
-.chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--sub);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--bg);flex-shrink:0;transition:background .15s,border-color .15s;cursor:pointer}
-.chk.on{background:var(--main);border-color:var(--main)}
-.cfg-row .lbl{min-width:96px;color:var(--text)}
-.range{color:var(--sub);font-size:.75rem;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
-.range input{width:52px;background:var(--sub-alt);border:none;border-radius:5px;color:var(--text);text-align:center;padding:4px 2px;font-size:.75rem}
-.range input:focus{outline:2px solid var(--main)}
-.durs{display:flex;gap:8px;margin:16px 0 4px;justify-content:center}
-.durs button{color:var(--sub);font-size:.8rem;padding:6px 12px;border-radius:var(--r);transition:color .15s,background .15s}
-.durs button.on{color:var(--main);background:var(--sub-alt)}
-.start{display:block;width:100%;max-width:340px;margin:18px auto 0;background:var(--main);color:var(--bg);font-weight:700;font-size:1.35rem;letter-spacing:1px;padding:20px 0;border-radius:12px}
-.recent{margin-top:26px}
-.recent h3,.sess h3{color:var(--sub);font-size:.7rem;font-weight:400;text-transform:lowercase;margin-bottom:8px}
-.sess-row{display:flex;justify-content:space-between;gap:10px;color:var(--sub);font-size:.75rem;padding:6px 0;border-bottom:1px solid var(--sub-alt)}
-.sess-row .s{color:var(--text)}
-.sess-row .tag{color:var(--main);font-size:.6rem;margin-left:6px}
-.sess-note{color:var(--sub);font-size:.62rem;font-family:var(--sans);font-weight:300;margin-top:8px}
+.controls{display:flex;flex-direction:column;gap:.75rem}
+.ctl-head{display:flex;justify-content:space-between;align-items:center}
+.linkbtn{font-size:var(--fs-1);color:var(--sub);padding:.375rem 0;transition:color .15s}
+@media (hover:hover){.linkbtn:hover{color:var(--main)}}
+/* operations: four toggles, glyph first. at least one stays on */
+.ops,.durs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+.op{height:4rem;border-radius:var(--r);border:1px solid var(--sub-alt);color:var(--sub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.125rem;transition:background .15s,color .15s,border-color .15s}
+.op .g{font-size:var(--fs-4);line-height:1}
+.op .n{font-size:var(--fs-1)}
+.op.on{background:var(--sub-alt);border-color:var(--sub-alt);color:var(--text)}
+.op.on .g{color:var(--main)}
+.durs{background:var(--sub-alt);border-radius:var(--r);padding:.25rem;gap:.25rem}
+.durs button{height:2.5rem;border-radius:calc(var(--r) - .25rem);color:var(--sub);font-size:var(--fs-2);transition:background .15s,color .15s}
+.durs button.on{background:var(--bg);color:var(--main)}
+.start{width:100%;height:4rem;margin-top:.5rem;background:var(--main);color:var(--bg);font-weight:700;font-size:var(--fs-3);letter-spacing:.06em;border-radius:var(--r-lg)}
+.kbd-hint{display:none;text-align:center;font-size:var(--fs-1);color:var(--sub)}
+.kbd-hint kbd{font:inherit;color:var(--text);background:var(--sub-alt);border-radius:.25rem;padding:.0625rem .375rem}
+@media (hover:hover) and (pointer:fine){.kbd-hint{display:block}}
+
+/* ---------- ranges sheet ---------- */
+.sheet-bg{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s ease}
+.sheet-bg[hidden]{display:none}
+.sheet{width:100%;max-width:var(--w);background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:1.25rem;animation:sheet-up .45s var(--spring)}
+@media (min-width:40rem){.sheet-bg{align-items:center}.sheet{border-radius:var(--r-lg);padding:1.5rem}}
+@keyframes sheet-up{from{transform:translateY(40%);opacity:0}}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-3)}
+.rg{display:flex;flex-direction:column;gap:.5rem}
+.rg-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.375rem;align-items:center;color:var(--sub)}
+.rg-row .x{color:var(--main);padding:0 .25rem}
+.rg-row input,.field{width:100%;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:1rem;padding:.625rem .5rem}
+.rg-row input{text-align:center;-moz-appearance:textfield}
+.rg-row input::-webkit-inner-spin-button{-webkit-appearance:none}
+.sheet-foot{display:flex;justify-content:space-between;align-items:center}
+.btn{background:var(--sub-alt);color:var(--main);padding:.625rem 1.25rem;border-radius:var(--r);font-size:var(--fs-2)}
+.btn.primary{background:var(--main);color:var(--bg);font-weight:700}
 
 /* ---------- game ---------- */
-.hud{display:flex;justify-content:space-between;align-items:center;color:var(--sub);font-size:.85rem;margin-bottom:6vh}
-.hud-r{display:flex;align-items:center;gap:14px}
+.hud{display:flex;justify-content:space-between;align-items:center;color:var(--sub);margin-bottom:6vh}
+.hud-r{display:flex;align-items:center;gap:.875rem}
 .hud .time{color:var(--main);font-weight:500}
 /* arabic-indic digits are bidi "AN": without an override the operands of "124 ÷ 2" render swapped */
 .problem,#ghost{direction:ltr;unicode-bidi:bidi-override}
-.problem{text-align:center;font-size:clamp(2.4rem,9vw,3.6rem);font-weight:500;letter-spacing:1px;margin-bottom:26px;min-height:1.3em}
+.problem{text-align:center;font-size:clamp(2.5rem,9vw,3.5rem);font-weight:500;letter-spacing:.02em;margin-bottom:1.5rem;min-height:1.3em}
 .answer-wrap{display:flex;justify-content:center}
-#answer{background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:2rem;text-align:center;width:200px;padding:10px;caret-color:var(--caret)}
+#answer{background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:2rem;text-align:center;width:12.5rem;padding:.625rem;caret-color:var(--caret)}
 #answer:focus{outline:none;box-shadow:0 0 0 2px var(--main)}
-.answer-ghost{font-size:2rem;text-align:center;min-height:64px;background:var(--sub-alt);border-radius:var(--r);width:200px;margin:0 auto;display:flex;align-items:center;justify-content:center;letter-spacing:2px}
+.answer-ghost{font-size:2rem;text-align:center;min-height:4rem;background:var(--sub-alt);border-radius:var(--r);width:12.5rem;margin:0 auto;display:flex;align-items:center;justify-content:center;letter-spacing:.1em}
 .answer-ghost .caret{display:inline-block;width:2px;height:1.2em;background:var(--caret);margin-left:2px;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:0}}
-.flash-wrong{animation:shake .25s}
-@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.game-hint{margin-top:3rem}
 
 /* keypad: one element, two widths, slides between sides on the shared spring.
    the side arrow lives in the space the compact pad leaves free; the size toggle sits in the hud corner */
-.tool{width:34px;height:30px;border-radius:var(--r);background:var(--sub-alt);color:var(--sub);display:inline-flex;align-items:center;justify-content:center;transition:color .15s}
+.tool{width:2.25rem;height:2rem;border-radius:var(--r);background:var(--sub-alt);color:var(--sub);display:inline-flex;align-items:center;justify-content:center;transition:color .15s}
 @media (hover:hover){.tool:hover,#side-btn:hover{color:var(--main)}}
 .tool svg,#side-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
-.tool svg{width:16px;height:16px}
+.tool svg{width:1rem;height:1rem}
 .tool svg *,#side-btn svg *{transition:transform var(--spring-t) var(--spring);transform-origin:center;transform-box:fill-box}
 /* maximize arrows point out; when the pad is big each corner flips about its own centre so they point in */
 #zoom-btn.big .za{transform:rotate(180deg)}
-.pad-area{--gap:10px;--kh:clamp(56px,10vh,80px);--cpw:min(calc(100cqw - 84px),300px);--aw:58px;--free:calc(100cqw - var(--cpw) - var(--gap));
-  width:100%;margin-top:20px;position:relative;container-type:inline-size}
-.pad{--pw:min(400px,100cqw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:var(--kh);gap:var(--gap);user-select:none;-webkit-user-select:none;
+.pad-area{--gap:.625rem;--kh:clamp(3.5rem,10vh,5rem);--cpw:min(calc(100cqw - 5.25rem),18.75rem);--aw:3.625rem;--free:calc(100cqw - var(--cpw) - var(--gap));
+  width:100%;margin-top:1.25rem;position:relative;container-type:inline-size}
+.pad{--pw:min(25rem,100cqw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:var(--kh);gap:var(--gap);user-select:none;-webkit-user-select:none;
   width:var(--pw);transform:translateX(calc((100cqw - var(--pw)) / 2));
   transition:width var(--spring-t) var(--spring),transform var(--spring-t) var(--spring)}
 .pad.compact{--pw:var(--cpw)}
 .pad.compact.left{transform:translateX(0)}
 .pad.compact.right{transform:translateX(calc(100cqw - var(--cpw)))}
-.pad button{background:var(--sub-alt);color:var(--text);border-radius:10px;font-size:1.9rem;line-height:1;display:flex;align-items:center;justify-content:center;
+.pad button{background:var(--sub-alt);color:var(--text);border-radius:var(--r);font-size:1.875rem;line-height:1;display:flex;align-items:center;justify-content:center;
   transition:font-size var(--spring-t) var(--spring),background .12s,color .12s}
-.pad.compact button{font-size:1.7rem}
+.pad.compact button{font-size:1.75rem}
 .pad button.press{background:var(--main);color:var(--bg)}
-.pad .fn{color:var(--sub);font-size:1.3rem}
-.pad.compact .fn{font-size:1.2rem}
+.pad .fn{color:var(--sub);font-size:1.25rem}
+.pad.compact .fn{font-size:1.25rem}
 /* slot carries the slide so the button's own transform stays free for the press bounce */
 #side-slot{position:absolute;top:50%;left:0;width:var(--aw);z-index:1;
   transform:translate(calc(var(--cpw) + var(--gap) + (var(--free) - var(--aw)) / 2),-50%);
   transition:transform var(--spring-t) var(--spring),opacity .25s}
 #side-slot.on-left{transform:translate(calc((var(--free) - var(--aw)) / 2),-50%)}
 #side-slot.off{opacity:0;pointer-events:none}
-#side-btn{display:flex;align-items:center;justify-content:center;width:100%;height:calc(var(--kh) * 2 + var(--gap));border-radius:14px;background:var(--sub-alt);color:var(--sub);transition:color .15s}
-#side-btn svg{width:24px;height:24px}
+#side-btn{display:flex;align-items:center;justify-content:center;width:100%;height:calc(var(--kh) * 2 + var(--gap));border-radius:var(--r-lg);background:var(--sub-alt);color:var(--sub);transition:color .15s}
+#side-btn svg{width:1.5rem;height:1.5rem}
 #side-slot.on-left #side-btn svg path{transform:rotate(180deg)}
-body.playing footer{display:none}
 .pad .bksp svg{width:1.3em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- results ---------- */
-.res-score{text-align:center;font-size:4rem;color:var(--main);font-weight:700}
-.res-sub{text-align:center;color:var(--sub);font-size:.8rem;margin-bottom:22px}
-.res-stats{display:flex;justify-content:center;gap:34px;margin-bottom:26px}
-.res-stats div{text-align:center}
-.res-stats .v{font-size:1.4rem;color:var(--text)}
-.res-actions{display:flex;justify-content:center;gap:14px}
-.res-actions button{color:var(--sub);font-size:.85rem;padding:8px 16px;border-radius:var(--r);transition:color .15s}
-.res-actions button:hover{color:var(--main)}
-.sess{margin-top:30px}
+.res-top{text-align:center;margin-bottom:2rem}
+.res-score{font-size:calc(var(--fs-hero) * 1.25);color:var(--main);font-weight:700;line-height:1.1}
+.res-top .tag{display:inline-block;margin-top:.5rem;color:var(--bg);background:var(--main);font-size:var(--fs-1);font-weight:700;padding:.125rem .5rem;border-radius:.25rem}
+.res-top .tag[hidden]{display:none}
+#pane-results .stats3{text-align:center;margin-bottom:2rem}
+.res-actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.res-actions .btn{height:3.25rem}
+#pane-results .kbd-hint{margin-top:.75rem}
+.sess{margin-top:2rem}
+.sess .label{display:block;margin-bottom:.5rem}
+.sess-row{display:flex;justify-content:space-between;gap:.75rem;color:var(--sub);font-size:var(--fs-1);padding:.5rem 0;border-bottom:1px solid var(--sub-alt)}
+.sess-row .s{color:var(--text)}
+.sess-note{color:var(--sub);font-size:var(--fs-1);margin-top:.75rem}
 
 /* ---------- settings ---------- */
-.set-h{color:var(--main);font-size:.75rem;margin:22px 0 10px;text-transform:lowercase}
-.set-h:first-child{margin-top:0}
-.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
-.tcard{border-radius:var(--r);padding:10px 12px;font-size:.72rem;text-align:left;border:2px solid transparent;transition:border-color .15s}
+#pane-settings{display:none}
+#pane-settings.show{display:flex;flex-direction:column;gap:2rem}
+.set{display:flex;flex-direction:column;gap:.75rem}
+.set-h{color:var(--main);font-size:var(--fs-1);display:flex;justify-content:space-between}
+.set-h span{color:var(--sub)}
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(7.5rem,1fr));gap:.5rem}
+.tcard{border-radius:var(--r);padding:.625rem .75rem;font-size:var(--fs-1);text-align:left;border:2px solid transparent;transition:border-color .15s}
 .tcard.on{border-color:var(--main)}
-.tcard .dots{display:flex;gap:4px;margin-top:6px}
-.tcard .dots i{width:9px;height:9px;border-radius:50%}
+.tcard .dots{display:flex;gap:.25rem;margin-top:.375rem}
+.tcard .dots i{width:.5625rem;height:.5625rem;border-radius:50%}
 /* numeral picker — the apple-clock style signature */
-.num-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ncard{background:var(--sub-alt);border-radius:var(--r);padding:14px 10px 10px;text-align:center;border:2px solid transparent;transition:border-color .15s}
+.num-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem}
+.ncard{background:var(--sub-alt);border-radius:var(--r);padding:.875rem .625rem .625rem;text-align:center;border:2px solid transparent;transition:border-color .15s}
 .ncard.on{border-color:var(--main)}
-.ncard .big{font-size:1.9rem;letter-spacing:3px;color:var(--text);line-height:1.1}
-.ncard .nm{color:var(--sub);font-size:.62rem;margin-top:6px;font-family:var(--sans);font-weight:300}
-.seg{display:flex;background:var(--sub-alt);border-radius:var(--r);padding:4px;gap:4px}
-.seg button{flex:1;color:var(--sub);font-size:.72rem;padding:8px 4px;border-radius:6px;transition:background .15s,color .15s}
+.ncard .big{font-size:var(--fs-4);letter-spacing:.1em;color:var(--text);line-height:1.1}
+.ncard .nm{color:var(--sub);font-size:var(--fs-1);margin-top:.375rem}
+.seg{display:flex;background:var(--sub-alt);border-radius:var(--r);padding:.25rem;gap:.25rem}
+.seg button{flex:1;color:var(--sub);font-size:var(--fs-1);padding:.625rem .25rem;border-radius:calc(var(--r) - .25rem);transition:background .15s,color .15s}
 .seg button.on{background:var(--bg);color:var(--main)}
-.set-note{color:var(--sub);font-size:.64rem;font-family:var(--sans);font-weight:300;margin-top:6px}
+.set-note{color:var(--sub);font-size:var(--fs-1)}
 .set-note:empty{display:none}
+/* size slider */
+.size-row{display:flex;align-items:center;gap:.75rem;color:var(--sub)}
+.size-row .a{font-size:.75rem}.size-row .A{font-size:1.25rem}
+#size{flex:1;-webkit-appearance:none;appearance:none;height:.375rem;border-radius:1rem;background:var(--sub-alt);outline-offset:.5rem}
+#size::-webkit-slider-thumb{-webkit-appearance:none;width:1.5rem;height:1.5rem;border-radius:50%;background:var(--main);border:none}
+#size::-moz-range-thumb{width:1.5rem;height:1.5rem;border-radius:50%;background:var(--main);border:none}
+.auth-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.5rem}
+.field{text-align:left;padding:.625rem .75rem}
+.auth-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 
-footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:12px;font-family:var(--sans);font-weight:300}
+.version{text-align:center;color:var(--sub);font-size:var(--fs-1)}
 
 @media (prefers-reduced-motion:reduce){
   :root{--spring-t:0s}
@@ -185,49 +238,51 @@ footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:
 
 <header>
   <button class="logo" onclick="go('config')"><span class="tick">✓</span><span class="word">leomac</span></button>
+  <button class="sync" id="cloud-dot" onclick="go('settings')" title="offline — sign in via settings" aria-label="sync status">
+    <svg class="i" viewBox="0 0 24 24"><path d="M7 18.5a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 17.9 9 4.75 4.75 0 0 1 17.5 18.5z"/><path class="slash" d="M3.5 3.5l17 17"/></svg>
+  </button>
   <div class="spacer"></div>
-  <button class="iconbtn" id="nav-config" onclick="go('config')" title="practice">∑</button>
-  <button class="iconbtn" id="nav-settings" onclick="go('settings')" title="settings">⚙</button>
-  <span class="iconbtn" id="cloud-dot" title="offline — sign in via settings">◌</span>
+  <button class="iconbtn" id="nav-config" onclick="go('config')" title="practice" aria-label="practice">
+    <svg class="i" viewBox="0 0 24 24"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>
+  </button>
+  <button class="iconbtn" id="nav-settings" onclick="go('settings')" title="settings" aria-label="settings">
+    <svg class="i" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
 </header>
 
 <main>
 
-  <!-- HOME / CONFIG -->
+  <!-- HOME: trend for the selected mode, the mode itself, start -->
   <section class="pane" id="pane-config">
-    <div class="stats rise" style="--i:0">
-      <div>
-        <div class="k">personal best · <span id="pb-dur">120s</span></div>
-        <div class="pb-v" id="pb-v">–</div>
+    <div class="trend rise" style="--i:0" id="trend">
+      <div class="trend-head"><span class="label mode" id="mode-name"></span><span class="label" id="trend-src"></span></div>
+      <div class="hero" id="pb-v">–</div>
+      <div class="label">personal best</div>
+      <div class="chart">
+        <svg id="spark" aria-label="score trend"></svg>
+        <div class="tip" id="spark-tip"></div>
+        <div class="chart-empty" id="spark-empty"></div>
       </div>
-      <div class="mini">
-        <div><div class="v" id="st-runs">0</div><div class="k">runs</div></div>
-        <div><div class="v" id="st-avg">–</div><div class="k">avg · last 10</div></div>
-        <div><div class="v" id="st-acc">–</div><div class="k">accuracy</div></div>
+      <div class="stats3">
+        <div><div class="v" id="st-runs">0</div><div class="label">runs</div></div>
+        <div><div class="v" id="st-avg">–</div><div class="label">avg of last 10</div></div>
+        <div><div class="v" id="st-acc">–</div><div class="label">accuracy</div></div>
       </div>
     </div>
-    <div class="spark-wrap rise" style="--i:1">
-      <svg id="spark" aria-label="score trend"></svg>
-      <div class="spark-tip" id="spark-tip"></div>
-      <p class="spark-empty" id="spark-empty">finish a couple of runs to see your trend</p>
-    </div>
-    <div class="cfg">
-      <div class="cfg-row rise" style="--i:2"><span class="chk on" data-op="add" onclick="toggleOp(this)">✓</span><span class="lbl">addition</span>
-        <span class="range">(<input type="number" id="a1" value="2"> to <input type="number" id="a2" value="100">) + (<input type="number" id="a3" value="2"> to <input type="number" id="a4" value="100">)</span></div>
-      <div class="cfg-row rise" style="--i:3"><span class="chk on" data-op="sub" onclick="toggleOp(this)">✓</span><span class="lbl">subtraction</span>
-        <span class="range">addition in reverse</span></div>
-      <div class="cfg-row rise" style="--i:4"><span class="chk on" data-op="mul" onclick="toggleOp(this)">✓</span><span class="lbl">multiplication</span>
-        <span class="range">(<input type="number" id="m1" value="2"> to <input type="number" id="m2" value="12">) × (<input type="number" id="m3" value="2"> to <input type="number" id="m4" value="100">)</span></div>
-      <div class="cfg-row rise" style="--i:5"><span class="chk on" data-op="div" onclick="toggleOp(this)">✓</span><span class="lbl">division</span>
-        <span class="range">multiplication in reverse</span></div>
-    </div>
-    <div class="durs rise" style="--i:6" id="durs">
-      <button data-d="30">30s</button><button data-d="60">60s</button><button data-d="120" class="on">120s</button><button data-d="300">300s</button>
-    </div>
-    <button class="start rise" style="--i:7" onclick="startGame()">start</button>
-    <div class="recent rise" style="--i:8" id="recent">
-      <h3>recent runs</h3>
-      <div id="recent-list"></div>
+
+    <div class="controls">
+      <div class="ctl-head rise" style="--i:1"><span class="label">mode</span><button class="linkbtn" id="ranges-btn" onclick="openRanges()"></button></div>
+      <div class="ops rise" style="--i:2" id="ops" role="group" aria-label="operations">
+        <button class="op" data-op="add"><span class="g">+</span><span class="n">add</span></button>
+        <button class="op" data-op="sub"><span class="g">−</span><span class="n">sub</span></button>
+        <button class="op" data-op="mul"><span class="g">×</span><span class="n">mul</span></button>
+        <button class="op" data-op="div"><span class="g">÷</span><span class="n">div</span></button>
+      </div>
+      <div class="durs rise" style="--i:3" id="durs" role="group" aria-label="duration">
+        <button data-d="30">30s</button><button data-d="60">60s</button><button data-d="120">120s</button><button data-d="300">300s</button>
+      </div>
+      <button class="start rise" style="--i:4" onclick="startGame()">start</button>
+      <p class="kbd-hint rise" style="--i:5">press <kbd>tab</kbd> to start</p>
     </div>
   </section>
 
@@ -251,71 +306,111 @@ footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:
       </div>
       <div class="pad" id="pad"></div>
     </div>
+    <p class="kbd-hint game-hint"><kbd>tab</kbd> restart · <kbd>esc</kbd> quit</p>
   </section>
 
   <!-- RESULTS -->
   <section class="pane" id="pane-results">
-    <div class="res-score" id="r-score">0</div>
-    <div class="res-sub" id="r-sub">problems solved</div>
-    <div class="res-stats">
-      <div><div class="v" id="r-best">–</div><div class="k">session best</div></div>
-      <div><div class="v" id="r-avg">–</div><div class="k">avg sec / problem</div></div>
-      <div><div class="v" id="r-acc">–</div><div class="k">first-try accuracy</div></div>
+    <div class="res-top">
+      <div class="res-score" id="r-score">0</div>
+      <div class="label" id="r-sub"></div>
+      <span class="tag" id="r-pb" hidden>new personal best</span>
+    </div>
+    <div class="stats3">
+      <div><div class="v" id="r-best">–</div><div class="label">mode best</div></div>
+      <div><div class="v" id="r-avg">–</div><div class="label">sec / problem</div></div>
+      <div><div class="v" id="r-acc">–</div><div class="label">first-try</div></div>
     </div>
     <div class="res-actions">
-      <button onclick="startGame()">try again</button>
-      <button onclick="go('config')">change settings</button>
+      <button class="btn primary" onclick="startGame()">try again</button>
+      <button class="btn" onclick="go('config')">home</button>
     </div>
+    <p class="kbd-hint">press <kbd>tab</kbd> to go again</p>
     <div class="sess">
-      <h3>this session</h3>
+      <span class="label">this session</span>
       <div id="sess-list"></div>
-      <p class="sess-note">sign in via settings to sync runs across devices.</p>
+      <p class="sess-note" id="sess-note"></p>
     </div>
   </section>
 
   <!-- SETTINGS -->
   <section class="pane" id="pane-settings">
-    <div class="set-h">theme</div>
-    <div class="theme-grid" id="themes"></div>
-
-    <div class="set-h">number style</div>
-    <div class="num-grid" id="numerals"></div>
-    <p class="set-note">changes how problems, answers and the on-screen pad are displayed, apple lock-screen style.</p>
-
-    <div class="set-h">keypad</div>
-    <div class="seg" id="kbd-seg">
-      <button data-k="native">native keyboard</button>
-      <button data-k="pad">on-screen pad</button>
-    </div>
-    <p class="set-note">during play, the window button in the top corner shrinks the pad to one side for thumb reach; tap the arrow in the free space to move it across.</p>
-
-    <div class="set-h">font</div>
-    <div class="seg" id="font-seg">
-      <button data-f="mono" class="on">jetbrains mono</button>
-      <button data-f="sans">lexend deca</button>
+    <div class="set">
+      <div class="set-h">size <span id="size-v">100%</span></div>
+      <div class="size-row"><span class="a">A</span><input type="range" id="size" min="80" max="130" step="5" value="100" aria-label="text and button size"><span class="A">A</span></div>
     </div>
 
-    <div class="set-h">cloud sync</div>
-    <div id="auth-box">
-      <div class="cfg-row" style="border:none;gap:8px;flex-wrap:wrap">
-        <input type="email" id="auth-email" placeholder="you@email.com" autocomplete="username" style="flex:1;min-width:150px;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
-        <input type="password" id="auth-pass" placeholder="password" autocomplete="current-password" style="flex:1;min-width:120px;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:.8rem">
+    <div class="set">
+      <div class="set-h">theme</div>
+      <div class="theme-grid" id="themes"></div>
+    </div>
+
+    <div class="set">
+      <div class="set-h">number style</div>
+      <div class="num-grid" id="numerals"></div>
+      <p class="set-note">changes how problems, answers and the on-screen pad are displayed, apple lock-screen style.</p>
+    </div>
+
+    <div class="set">
+      <div class="set-h">keypad</div>
+      <div class="seg" id="kbd-seg">
+        <button data-k="native">native keyboard</button>
+        <button data-k="pad">on-screen pad</button>
       </div>
-      <div class="cfg-row" style="border:none;gap:8px">
-        <button onclick="signIn()" style="background:var(--sub-alt);color:var(--main);padding:9px 14px;border-radius:var(--r);font-size:.8rem">sign in</button>
-        <button onclick="signUp()" style="color:var(--sub);padding:9px 10px;font-size:.75rem">create account (first time)</button>
+      <p class="set-note">during play, the window button in the top corner shrinks the pad to one side for thumb reach; tap the arrow in the free space to move it across.</p>
+    </div>
+
+    <div class="set">
+      <div class="set-h">font</div>
+      <div class="seg" id="font-seg">
+        <button data-f="mono">jetbrains mono</button>
+        <button data-f="sans">lexend deca</button>
       </div>
-      <p class="set-note" id="auth-note"></p>
     </div>
-    <div id="auth-signed" style="display:none">
-      <p class="set-note" id="auth-who"></p>
-      <p class="set-note">theme, number style, font and duration are saved to your account.</p>
-      <button onclick="signOut()" style="color:var(--sub);font-size:.75rem;padding:6px 0">sign out</button>
+
+    <div class="set" id="sync-set">
+      <div class="set-h">cloud sync</div>
+      <div id="auth-box" class="set">
+        <div class="auth-fields">
+          <input class="field" type="email" id="auth-email" placeholder="you@email.com" autocomplete="username">
+          <input class="field" type="password" id="auth-pass" placeholder="password" autocomplete="current-password">
+        </div>
+        <div class="auth-actions">
+          <button class="btn" onclick="signIn()">sign in</button>
+          <button class="linkbtn" onclick="signUp()">create account (first time)</button>
+        </div>
+        <p class="set-note" id="auth-note"></p>
+      </div>
+      <div id="auth-signed" class="set" style="display:none">
+        <p class="set-note" id="auth-who"></p>
+        <p class="set-note">theme, number style, font, mode and ranges are saved to your account.</p>
+        <div><button class="linkbtn" onclick="signOut()">sign out</button></div>
+      </div>
     </div>
+    <p class="version">v0.4</p>
   </section>
 
 </main>
-<footer>v0.3</footer>
+
+<!-- RANGES SHEET -->
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-h"><span id="sheet-title">ranges</span></div>
+    <div class="rg">
+      <span class="label">addition · subtraction runs it in reverse</span>
+      <div class="rg-row"><input type="number" inputmode="numeric" id="a1"><span>–</span><input type="number" inputmode="numeric" id="a2"><span class="x">+</span><input type="number" inputmode="numeric" id="a3"><span>–</span><input type="number" inputmode="numeric" id="a4"></div>
+    </div>
+    <div class="rg">
+      <span class="label">multiplication · division runs it in reverse</span>
+      <div class="rg-row"><input type="number" inputmode="numeric" id="m1"><span>–</span><input type="number" inputmode="numeric" id="m2"><span class="x">×</span><input type="number" inputmode="numeric" id="m3"><span>–</span><input type="number" inputmode="numeric" id="m4"></div>
+    </div>
+    <p class="set-note">each set of ranges keeps its own trend.</p>
+    <div class="sheet-foot">
+      <button class="linkbtn" onclick="resetRanges()">reset to default</button>
+      <button class="btn primary" onclick="closeRanges()">done</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ---------------- themes (palettes from monkeytype theme file) ---------------- */
@@ -336,18 +431,22 @@ const NUMSYS={
   devanagari:{name:"Devanagari",digits:"०१२३४५६७८९"},
   bangla:{name:"Bangla",digits:"০১২৩৪৫৬৭৮৯"},
 };
+const OPS=["add","sub","mul","div"], GLYPH={add:"+",sub:"−",mul:"×",div:"÷"};
+const DEF_ADD=[2,100,2,100], DEF_MUL=[2,12,2,100];
 
 /* touch-first devices default to the on-screen pad */
 const COARSE=window.matchMedia&&matchMedia("(pointer: coarse)").matches;
-const S={theme:"serika_dark",numsys:"western",kbd:COARSE?"pad":"native",side:"right",big:true,font:"mono",dur:120};
-const ops={add:true,sub:true,mul:true,div:true};
-let game=null, sessions=[], hist=[];
+const S={theme:"serika_dark",numsys:"western",kbd:COARSE?"pad":"native",side:"right",big:true,font:"mono",dur:120,
+  ops:{add:true,sub:true,mul:true,div:true},add:[...DEF_ADD],mul:[...DEF_MUL],size:100};
+let game=null, sessions=[], hist=[], histLoading=true, authPending=true;
 
 /* ---------------- preferences ----------------
-   look & feel follows the account (user_metadata.prefs); input setup stays per device */
-const SYNC_KEYS=["theme","numsys","font","dur"], DEV_KEYS=["kbd","side","big"];
+   look & feel and the mode follow the account (user_metadata.prefs); input setup and size stay per device */
+const SYNC_KEYS=["theme","numsys","font","dur","ops","add","mul"], DEV_KEYS=["kbd","side","big","size"];
+const okRange=v=>Array.isArray(v)&&v.length===4&&v.every(n=>Number.isInteger(n)&&n>0)&&v[0]<=v[1]&&v[2]<=v[3];
 const VALID={theme:v=>v in THEMES,numsys:v=>v in NUMSYS,font:v=>v==="mono"||v==="sans",dur:v=>[30,60,120,300].includes(v),
-  kbd:v=>v==="native"||v==="pad",side:v=>v==="left"||v==="right",big:v=>typeof v==="boolean"};
+  ops:v=>v&&typeof v==="object"&&OPS.every(k=>typeof v[k]==="boolean")&&OPS.some(k=>v[k]),add:okRange,mul:okRange,
+  kbd:v=>v==="native"||v==="pad",side:v=>v==="left"||v==="right",big:v=>typeof v==="boolean",size:v=>Number.isInteger(v)&&v>=80&&v<=130};
 function mergePrefs(p,keys){ if(p&&typeof p==="object")keys.forEach(k=>{ if(k in p&&VALID[k](p[k]))S[k]=p[k]; }); }
 function pick(keys){ const o={};keys.forEach(k=>o[k]=S[k]);return o; }
 function lsGet(k){ try{return JSON.parse(localStorage.getItem(k)||"null");}catch(e){return null;} }
@@ -366,16 +465,15 @@ const SB_KEY="sb_publishable_0lWr5WFpHREkUoQkk95XRA_WDl-Thjk";
 let sb=null, sbUser=null;
 try{ sb=window.supabase.createClient(SB_URL,SB_KEY); }catch(e){ console.warn("supabase unavailable",e); }
 function setCloud(on,who){
-  const d=document.getElementById("cloud-dot");
-  d.textContent=on?"●":"◌";
-  d.style.color=on?"var(--main)":"var(--sub)";
+  const d=$("cloud-dot");
+  d.classList.toggle("on",on);
   d.title=on?"syncing as "+who:"offline — sign in via settings";
-  document.getElementById("auth-box").style.display=on?"none":"block";
-  document.getElementById("auth-signed").style.display=on?"block":"none";
-  if(on)document.getElementById("auth-who").textContent="signed in as "+who;
+  $("auth-box").style.display=on?"flex":"none";
+  $("auth-signed").style.display=on?"flex":"none";
+  if(on)$("auth-who").textContent="signed in as "+who;
 }
 function initAuth(){
-  if(!sb)return;
+  if(!sb){authPending=false;return;}
   sb.auth.onAuthStateChange((ev,s)=>{
     sbUser=s?.user||null;
     setCloud(!!sbUser,sbUser?.email||"");
@@ -384,6 +482,7 @@ function initAuth(){
   });
 }
 async function onUserReady(){
+  authPending=false;
   if(sbUser){
     /* getUser hits the server, so prefs changed on another device win over the cached session */
     const {data}=await sb.auth.getUser().catch(()=>({data:null}));
@@ -394,17 +493,13 @@ async function onUserReady(){
   await loadHistory();
 }
 async function signIn(){
-  const email=document.getElementById("auth-email").value.trim();
-  const pass=document.getElementById("auth-pass").value;
-  const note=document.getElementById("auth-note");
+  const email=$("auth-email").value.trim(), pass=$("auth-pass").value, note=$("auth-note");
   if(!sb||!email||!pass){note.textContent="enter email and password.";return;}
   const {error}=await sb.auth.signInWithPassword({email,password:pass});
   note.textContent=error?("error: "+error.message):"signed in.";
 }
 async function signUp(){
-  const email=document.getElementById("auth-email").value.trim();
-  const pass=document.getElementById("auth-pass").value;
-  const note=document.getElementById("auth-note");
+  const email=$("auth-email").value.trim(), pass=$("auth-pass").value, note=$("auth-note");
   if(!sb||!email||!pass){note.textContent="enter email and a new password first.";return;}
   if(pass.length<8){note.textContent="password needs 8+ characters.";return;}
   const {error}=await sb.auth.signUp({email,password:pass});
@@ -417,35 +512,48 @@ async function saveRun(run){
   if(error){console.warn("save failed",error);return{cloud:false};}
   return{cloud:true};
 }
-async function allTimeBest(dur){
-  if(!sb||!sbUser)return null;
-  const {data,error}=await sb.from("runs").select("score").eq("duration_s",dur).order("score",{ascending:false}).limit(1);
-  if(error||!data?.length)return null;
-  return data[0].score;
+
+/* ---------------- modes ----------------
+   a mode is the set of operations plus the ranges they draw from; each mode × duration has its own trend.
+   runs saved before configs were recorded count as the default mode */
+function modeKey(cfg){
+  const o=VALID.ops(cfg?.ops)?cfg.ops:{add:true,sub:true,mul:true,div:true};
+  const add=okRange(cfg?.add)?cfg.add:DEF_ADD, mul=okRange(cfg?.mul)?cfg.mul:DEF_MUL;
+  const k=[OPS.filter(x=>o[x]).join(",")];
+  if(o.add||o.sub)k.push("a"+add.join("-"));
+  if(o.mul||o.div)k.push("m"+mul.join("-"));
+  return k.join("|");
 }
+const curCfg=()=>({ops:S.ops,add:S.add,mul:S.mul});
+const curMode=()=>modeKey(curCfg());
+const isDefaultRanges=()=>modeKey(curCfg())===modeKey({ops:S.ops});
+function modeName(){ return OPS.filter(k=>S.ops[k]).map(k=>GLYPH[k]).join(" ")+" · "+S.dur+"s"+(isDefaultRanges()?"":" · custom"); }
 
 /* ---------------- run history (cloud when signed in, this device otherwise) ---------------- */
 function localRuns(){ const r=lsGet("leomac.runs");return Array.isArray(r)?r:[]; }
 async function loadHistory(){
-  hist=localRuns();
+  hist=localRuns().map(r=>({...r,mode:r.mode||modeKey(null)}));
   if(sb&&sbUser){
-    const {data,error}=await sb.from("runs").select("created_at,duration_s,score,first_try_accuracy")
-      .order("created_at",{ascending:false}).limit(300);
-    if(!error&&data)hist=data.map(r=>({at:r.created_at,dur:r.duration_s,score:r.score,acc:r.first_try_accuracy==null?null:+r.first_try_accuracy}));
+    histLoading=true;renderHome();
+    const {data,error}=await sb.from("runs").select("created_at,duration_s,score,first_try_accuracy,config")
+      .order("created_at",{ascending:false}).limit(500);
+    if(!error&&data)hist=data.map(r=>({at:r.created_at,dur:r.duration_s,score:r.score,acc:r.first_try_accuracy==null?null:+r.first_try_accuracy,mode:modeKey(r.config)}));
+    else console.warn("history load failed",error);
   }
+  histLoading=false;
   renderHome();
 }
 function recordRun(r){
   lsSet("leomac.runs",[r,...localRuns()].slice(0,300));
   hist.unshift(r);
 }
+const modeRuns=()=>{ const m=curMode();return hist.filter(r=>r.dur===S.dur&&r.mode===m); };
 
 /* ---------------- helpers ---------------- */
 const $=id=>document.getElementById(id);
 function toNum(n,sys){const d=NUMSYS[sys].digits;return String(n).split("").map(c=>/\d/.test(c)?d[+c]:c).join("");}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-function fmtDate(iso){const d=new Date(iso);return d.toLocaleDateString([], {month:"short",day:"numeric"}).toLowerCase();}
-function fmtTime(iso){return new Date(iso).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});}
+function fmtDate(iso){return new Date(iso).toLocaleDateString([], {month:"short",day:"numeric"}).toLowerCase();}
 
 function go(p){
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("show"));
@@ -460,41 +568,48 @@ function go(p){
 /* ---------------- home ---------------- */
 let lastPb={};
 function renderHome(){
-  const atDur=hist.filter(r=>r.dur===S.dur);
-  const pb=atDur.length?Math.max(...atDur.map(r=>r.score)):null;
+  $("mode-name").textContent=modeName();
+  const loading=authPending||(histLoading&&sbUser);
+  $("trend-src").textContent=loading?"loading…":sbUser?"synced":"this device";
+  $("ranges-btn").textContent="ranges · "+(isDefaultRanges()?"default":"custom")+" ›";
+  syncOpsUI();syncDurUI();
+  const runs=modeRuns(), key=curMode()+"@"+S.dur;
+  const pb=runs.length?Math.max(...runs.map(r=>r.score)):null;
   const pbEl=$("pb-v");
-  $("pb-dur").textContent=S.dur+"s";
   pbEl.textContent=pb===null?"–":pb;
-  if(pb!==null&&lastPb[S.dur]!==undefined&&pb>lastPb[S.dur]){pbEl.classList.remove("new");void pbEl.offsetWidth;pbEl.classList.add("new");}
-  lastPb[S.dur]=pb===null?undefined:pb;
-  const last10=atDur.slice(0,10);
-  $("st-runs").textContent=atDur.length;
+  pbEl.classList.toggle("empty",pb===null);
+  if(pb!==null&&lastPb[key]!==undefined&&pb>lastPb[key]){pbEl.classList.remove("new");void pbEl.offsetWidth;pbEl.classList.add("new");}
+  lastPb[key]=pb===null?undefined:pb;
+  const last10=runs.slice(0,10);
+  $("st-runs").textContent=runs.length;
   $("st-avg").textContent=last10.length?(last10.reduce((a,r)=>a+r.score,0)/last10.length).toFixed(1):"–";
   const accs=last10.map(r=>r.acc).filter(a=>a!=null);
   $("st-acc").textContent=accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length)+"%":"–";
-  drawSpark(atDur.slice(0,20).reverse(),pb);
-  /* best per duration, to tag record runs in the list */
-  const best={};hist.forEach(r=>{best[r.dur]=Math.max(best[r.dur]??-1,r.score);});
-  const recent=hist.slice(0,5);
-  $("recent").style.display=recent.length?"block":"none";
-  $("recent-list").innerHTML=recent.map(r=>
-    `<div class="sess-row"><span>${fmtDate(r.at)} · ${fmtTime(r.at)} · ${r.dur}s</span><span><span class="s">${r.score}</span>${r.acc!=null?" · "+Math.round(r.acc)+"%":""}${r.score===best[r.dur]&&r.score>0?'<span class="tag">pb</span>':""}</span></div>`).join("");
+  drawSpark(runs.slice(0,30).reverse(),pb);
+}
+function emptyMsg(n){
+  if(authPending||(histLoading&&sbUser))return "loading your history…";
+  const signIn=sbUser?"":`<button onclick="go('settings')">sign in to load your history</button>`;
+  if(n===1)return "one run in this mode — finish another to see your trend"+(signIn?"<br>"+signIn:"");
+  return "no runs in this mode yet"+(signIn?"<br>"+signIn:"");
 }
 let sparkPts=[];
 function drawSpark(runs,pb){
   const svg=$("spark"),empty=$("spark-empty");
   $("spark-tip").classList.remove("show");
-  if(runs.length<2){svg.innerHTML="";sparkPts=[];empty.style.display="flex";return;}
+  if(runs.length<2){svg.innerHTML="";sparkPts=[];empty.innerHTML=emptyMsg(runs.length);empty.style.display="flex";return;}
   empty.style.display="none";
-  const W=svg.clientWidth||300,H=58,pad=6;
+  const W=svg.clientWidth||300,H=svg.clientHeight||112,pad=8;
   const lo=Math.min(...runs.map(r=>r.score)),hi=Math.max(...runs.map(r=>r.score)),span=Math.max(hi-lo,1);
-  sparkPts=runs.map((r,i)=>({r,x:pad+i*(W-2*pad)/(runs.length-1),y:pad+(1-(r.score-lo)/span)*(H-2*pad)}));
+  const y=s=>pad+(1-(s-lo)/span)*(H-2*pad);
+  sparkPts=runs.map((r,i)=>({r,x:pad+i*(W-2*pad)/(runs.length-1),y:y(r.score)}));
   const d=sparkPts.map((p,i)=>(i?"L":"M")+p.x.toFixed(1)+" "+p.y.toFixed(1)).join(" ");
-  const pbY=pad+(1-(pb-lo)/span)*(H-2*pad);
-  const end=sparkPts[sparkPts.length-1];
+  const first=sparkPts[0],end=sparkPts[sparkPts.length-1];
   svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
   svg.innerHTML=
-    `<line x1="0" x2="${W}" y1="${pbY}" y2="${pbY}" stroke="var(--sub)" stroke-width="1" stroke-dasharray="2 4" opacity=".6"/>`+
+    `<defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--main)" stop-opacity=".22"/><stop offset="1" stop-color="var(--main)" stop-opacity="0"/></linearGradient></defs>`+
+    `<path d="${d} L${end.x} ${H} L${first.x} ${H}Z" fill="url(#fill)"/>`+
+    `<line x1="0" x2="${W}" y1="${y(pb)}" y2="${y(pb)}" stroke="var(--sub)" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>`+
     `<path d="${d}" fill="none" stroke="var(--main)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
     `<circle cx="${end.x}" cy="${end.y}" r="4" fill="var(--main)" stroke="var(--bg)" stroke-width="2"/>`+
     `<circle id="spark-dot" r="5" fill="var(--main)" stroke="var(--bg)" stroke-width="2" style="display:none"/>`;
@@ -506,7 +621,7 @@ function sparkHover(e){
   const dot=$("spark-dot");dot.setAttribute("cx",p.x);dot.setAttribute("cy",p.y);dot.style.display="";
   const tip=$("spark-tip");
   tip.innerHTML=`${p.r.score} <span>· ${fmtDate(p.r.at)}${p.r.acc!=null?" · "+Math.round(p.r.acc)+"%":""}</span>`;
-  tip.style.left=Math.min(Math.max(p.x,40),box.width-40)+"px";
+  tip.style.left=Math.min(Math.max(p.x,48),box.width-48)+"px";
   tip.classList.add("show");
 }
 function sparkLeave(){ $("spark-tip").classList.remove("show");const d=$("spark-dot");if(d)d.style.display="none"; }
@@ -515,25 +630,55 @@ $("spark").addEventListener("pointerdown",sparkHover);
 $("spark").addEventListener("pointerleave",e=>{ if(e.pointerType==="mouse")sparkLeave(); });
 document.addEventListener("pointerdown",e=>{ if(!e.target.closest("#spark"))sparkLeave(); });
 window.addEventListener("resize",()=>{ if($("pane-config").classList.contains("show"))renderHome(); });
+function swapTrend(){ const t=$("trend");t.classList.remove("swap");void t.offsetWidth;t.classList.add("swap"); }
 
-/* ---------------- config ---------------- */
-function toggleOp(el){
-  const k=el.dataset.op;ops[k]=!ops[k];
-  el.classList.toggle("on",ops[k]);el.textContent=ops[k]?"✓":"";
-}
+/* ---------------- mode controls ---------------- */
+$("ops").addEventListener("click",e=>{
+  const b=e.target.closest(".op");if(!b)return;
+  const k=b.dataset.op;
+  /* the last operation can't be switched off — nudge instead */
+  if(S.ops[k]&&OPS.filter(x=>S.ops[x]).length===1){b.classList.remove("flash-wrong");void b.offsetWidth;b.classList.add("flash-wrong");return;}
+  S.ops={...S.ops,[k]:!S.ops[k]};
+  savePrefs();swapTrend();renderHome();
+});
+function syncOpsUI(){ document.querySelectorAll("#ops .op").forEach(b=>{ const on=S.ops[b.dataset.op];b.classList.toggle("on",on);b.setAttribute("aria-pressed",on); }); }
 $("durs").addEventListener("click",e=>{
-  if(!e.target.dataset.d)return;
+  if(!e.target.dataset.d||+e.target.dataset.d===S.dur)return;
   S.dur=+e.target.dataset.d;
-  syncDurUI();savePrefs();renderHome();
+  savePrefs();swapTrend();renderHome();
 });
 function syncDurUI(){ document.querySelectorAll("#durs button").forEach(b=>b.classList.toggle("on",+b.dataset.d===S.dur)); }
 
+/* ---------------- ranges sheet ---------------- */
+const RANGE_IDS={add:["a1","a2","a3","a4"],mul:["m1","m2","m3","m4"]};
+function fillRanges(){ for(const k in RANGE_IDS)RANGE_IDS[k].forEach((id,i)=>$(id).value=S[k][i]); }
+function readRange(k,fallback){
+  let v=RANGE_IDS[k].map(id=>Math.round(+$(id).value));
+  if(!v.every(n=>n>0))return fallback;
+  /* a reversed pair is almost certainly a typo, not a request for an empty range */
+  if(v[0]>v[1])v=[v[1],v[0],v[2],v[3]];
+  if(v[2]>v[3])v=[v[0],v[1],v[3],v[2]];
+  return v;
+}
+function openRanges(){ fillRanges();$("sheet").hidden=false;setTimeout(()=>$("a1").focus({preventScroll:true}),COARSE?400:50); }
+function closeRanges(){
+  if($("sheet").hidden)return;
+  const before=curMode();
+  S.add=readRange("add",S.add);S.mul=readRange("mul",S.mul);
+  $("sheet").hidden=true;
+  if(document.activeElement)document.activeElement.blur();
+  if(curMode()!==before){savePrefs();swapTrend();}
+  renderHome();
+}
+function resetRanges(){ S.add=[...DEF_ADD];S.mul=[...DEF_MUL];fillRanges(); }
+$("sheet").addEventListener("click",e=>{ if(e.target.id==="sheet")closeRanges(); });
+$("sheet").addEventListener("keydown",e=>{ if(e.key==="Enter")closeRanges(); });
+
 /* ---------------- game loop (zetamac-faithful) ---------------- */
 function makeProblem(){
-  const pool=Object.keys(ops).filter(k=>ops[k]);
+  const pool=OPS.filter(k=>S.ops[k]);
   const op=pool[rnd(0,pool.length-1)]||"add";
-  const A1=+$("a1").value,A2=+$("a2").value,A3=+$("a3").value,A4=+$("a4").value;
-  const M1=+$("m1").value,M2=+$("m2").value,M3=+$("m3").value,M4=+$("m4").value;
+  const [A1,A2,A3,A4]=S.add,[M1,M2,M3,M4]=S.mul;
   let x,y,ans,txt;
   if(op==="add"){x=rnd(A1,A2);y=rnd(A3,A4);ans=x+y;txt=`${x} + ${y}`;}
   else if(op==="sub"){x=rnd(A1,A2);y=rnd(A3,A4);ans=x;txt=`${x+y} − ${y}`;}
@@ -545,7 +690,8 @@ function renderProblem(){
   $("problem").textContent=toNum(game.p.txt,S.numsys)+" =";
 }
 function startGame(){
-  if(!Object.values(ops).some(v=>v))return;
+  /* restarting mid-run abandons it without saving, like monkeytype */
+  if(game){clearInterval(game.tick);game=null;}
   game={score:0,left:S.dur,p:makeProblem(),buf:"",attempted:0,firstTryMiss:0,missedThis:false,t0:Date.now(),pStart:Date.now(),problems:[]};
   go("game");
   $("score").textContent="0";$("time").textContent=game.left;
@@ -555,6 +701,7 @@ function startGame(){
     if(game.left<=0)endGame();
   },1000);
   if(S.kbd==="native")setTimeout(()=>$("answer").focus(),50);
+  else if(document.activeElement)document.activeElement.blur();
 }
 function renderGhost(){ $("ghost").textContent=toNum(game?game.buf:"",S.numsys); }
 function clearAnswer(){game.buf="";$("answer").value="";renderGhost();}
@@ -589,40 +736,48 @@ function padPress(k){
 }
 function endGame(){
   clearInterval(game.tick);
-  const dur=S.dur;
+  const dur=S.dur, mode=curMode();
+  const prevBest=Math.max(-1,...modeRuns().map(r=>r.score));
   const acc=game.attempted?Math.round(100*(game.attempted-game.firstTryMiss)/game.attempted):null;
   const avgMs=game.problems.length?Math.round(game.problems.reduce((a,p)=>a+p.ms,0)/game.problems.length):null;
   const run={
     duration_s:dur,score:game.score,
     first_try_accuracy:acc,avg_ms_per_problem:avgMs,
-    config:{ops:{...ops},add:[+$("a1").value,+$("a2").value,+$("a3").value,+$("a4").value],mul:[+$("m1").value,+$("m2").value,+$("m3").value,+$("m4").value],numsys:S.numsys,kbd:S.kbd==="pad"?(S.big?"pad":"one"):"native"},
+    config:{ops:{...S.ops},add:[...S.add],mul:[...S.mul],numsys:S.numsys,kbd:S.kbd==="pad"?(S.big?"pad":"one"):"native"},
     problems:game.problems
   };
-  recordRun({at:new Date().toISOString(),dur,score:game.score,acc});
-  sessions.unshift({score:game.score,dur,at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
+  recordRun({at:new Date().toISOString(),dur,score:game.score,acc,mode});
+  sessions.unshift({score:game.score,name:modeName(),at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
   $("r-score").textContent=game.score;
-  $("r-best").textContent=Math.max(...sessions.map(s=>s.score));
-  document.querySelector("#pane-results .res-stats .k").textContent="session best";
-  $("r-avg").textContent=game.score?( dur/game.score).toFixed(1):"–";
+  $("r-sub").textContent="problems · "+modeName();
+  $("r-pb").hidden=!(game.score>0&&game.score>prevBest&&prevBest>=0);
+  $("r-best").textContent=Math.max(prevBest,game.score);
+  $("r-avg").textContent=game.score?(dur/game.score).toFixed(1):"–";
   $("r-acc").textContent=acc===null?"–":acc+"%";
   $("sess-list").innerHTML=sessions.slice(0,8).map(s=>
-    `<div class="sess-row"><span>${s.at} · ${s.dur}s</span><span class="s">${s.score}</span></div>`).join("");
-  const myScore=game.score;
+    `<div class="sess-row"><span>${s.at} · ${s.name}</span><span class="s">${s.score}</span></div>`).join("");
+  $("sess-note").textContent=sbUser?"saving…":"offline run — sign in via settings to sync across devices.";
   game=null;
   go("results");
-  /* cloud: fire-and-forget save, then upgrade the best stat to all-time */
-  saveRun(run).then(async r=>{
-    const note=document.querySelector(".sess-note");
-    note.textContent=r.cloud?"synced to supabase ● claude can read your history any time.":"offline run — sign in via settings to sync across devices.";
-    if(r.cloud){
-      const best=await allTimeBest(dur);
-      if(best!==null){
-        $("r-best").textContent=Math.max(best,myScore);
-        document.querySelector("#pane-results .res-stats .k").textContent="all-time best · "+dur+"s";
-      }
-    }
+  saveRun(run).then(r=>{
+    if(sbUser)$("sess-note").textContent=r.cloud?"synced to supabase ● claude can read your history any time.":"couldn't reach supabase — saved on this device only.";
   });
 }
+
+/* ---------------- keyboard: tab = new run in the same mode, esc = back home ---------------- */
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    if(!$("sheet").hidden){closeRanges();return;}
+    if(game){e.preventDefault();go("config");}
+    return;
+  }
+  if(e.key!=="Tab"||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey)return;
+  /* leave tab alone while typing in a form field or editing ranges */
+  const a=document.activeElement;
+  if(!$("sheet").hidden||(a&&a.tagName==="INPUT"&&a.id!=="answer"))return;
+  e.preventDefault();
+  startGame();
+});
 
 /* ---------------- keypad ---------------- */
 const PADKEYS=["7","8","9","4","5","6","1","2","3","C","0","back"];
@@ -667,6 +822,14 @@ $("kbd-seg").addEventListener("click",e=>{
 });
 function syncKbdUI(){ document.querySelectorAll("#kbd-seg button").forEach(b=>b.classList.toggle("on",b.dataset.k===S.kbd)); }
 
+/* ---------------- size: scales the root font, and everything is in rem ---------------- */
+function applySize(){
+  document.documentElement.style.fontSize=(16*S.size/100)+"px";
+  $("size").value=S.size;$("size-v").textContent=S.size+"%";
+}
+$("size").addEventListener("input",e=>{ S.size=+e.target.value;applySize(); });
+$("size").addEventListener("change",()=>savePrefs());
+
 /* ---------------- theme + numerals + font ---------------- */
 function applyTheme(){
   const t=THEMES[S.theme],r=document.documentElement.style;
@@ -705,14 +868,14 @@ $("font-seg").addEventListener("click",e=>{
   applyFont();savePrefs();
 });
 function applyAll(){
-  applyTheme();applyNumsys();applyFont();syncDurUI();syncKbdUI();applyPadLayout();
+  applySize();applyTheme();applyNumsys();applyFont();syncKbdUI();applyPadLayout();
   if($("pane-config").classList.contains("show"))renderHome();
 }
 
 /* ---------------- bouncy buttons ---------------- */
 let pressed=null;
 document.addEventListener("pointerdown",e=>{
-  const b=e.target.closest("button,.chk");
+  const b=e.target.closest("button");
   if(!b)return;
   b.classList.remove("boing");b.classList.add("press");pressed=b;
 });
@@ -723,17 +886,19 @@ function release(){
 }
 document.addEventListener("pointerup",release);
 document.addEventListener("pointercancel",release);
-document.addEventListener("animationend",e=>{ if(e.animationName==="boing")e.target.classList.remove("boing"); });
+document.addEventListener("animationend",e=>{ ["boing","shake"].includes(e.animationName)&&e.target.classList.remove(e.animationName==="boing"?"boing":"flash-wrong"); });
 
 /* ---------------- init ---------------- */
 mergePrefs(lsGet("leomac.prefs"),SYNC_KEYS);
 mergePrefs(lsGet("leomac.device"),DEV_KEYS);
 buildThemes();buildNumerals();buildPad();
+applySize();
 go("config");
 applyAll();
 loadHistory();
 initAuth();
 setTimeout(()=>document.body.classList.remove("intro"),1800);
+setTimeout(()=>{ if(authPending){authPending=false;renderHome();} },5000);
 </script>
 </body>
 </html>
