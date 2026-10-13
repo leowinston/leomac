@@ -113,10 +113,10 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .kbd-hint kbd{font:inherit;color:var(--text);background:var(--sub-alt);border-radius:.25rem;padding:.0625rem .375rem}
 @media (hover:hover) and (pointer:fine){.kbd-hint{display:block}}
 
-/* ---------- ranges sheet ---------- */
+/* ---------- configurations sheet ---------- */
 .sheet-bg{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s ease}
 .sheet-bg[hidden]{display:none}
-.sheet{width:100%;max-width:var(--w);background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:1.25rem;animation:sheet-up .45s var(--spring)}
+.sheet{width:100%;max-width:var(--w);max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:1.25rem;animation:sheet-up .45s var(--spring)}
 @media (min-width:40rem){.sheet-bg{align-items:center}.sheet{border-radius:var(--r-lg);padding:1.5rem}}
 @keyframes sheet-up{from{transform:translateY(40%);opacity:0}}
 .sheet-h{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-3)}
@@ -127,6 +127,17 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .rg-row input{text-align:center;-moz-appearance:textfield}
 .rg-row input::-webkit-inner-spin-button{-webkit-appearance:none}
 .sheet-foot{display:flex;justify-content:space-between;align-items:center}
+.cfg-list{display:flex;flex-direction:column;gap:.375rem}
+.cfg{display:flex;align-items:center;gap:.75rem;width:100%;text-align:left;padding:.625rem .75rem;border-radius:var(--r);background:var(--sub-alt);border:2px solid transparent;transition:border-color .15s}
+.cfg.on{border-color:var(--main)}
+.cfg .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:.125rem}
+.cfg .nm{color:var(--text);font-size:var(--fs-2)}
+.cfg .why{color:var(--sub);font-size:var(--fs-1)}
+.cfg .st{text-align:right;font-size:var(--fs-1);color:var(--sub);white-space:nowrap}
+.cfg .st b{display:block;color:var(--text);font-weight:500;font-size:var(--fs-2)}
+.cfg .del{color:var(--sub);font-size:1rem;width:2rem;height:2rem;margin:-.5rem -.375rem -.5rem 0;border-radius:var(--r);flex-shrink:0}
+@media (hover:hover){.cfg .del:hover{color:var(--error)}}
+.save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem}
 .btn{background:var(--sub-alt);color:var(--main);padding:.625rem 1.25rem;border-radius:var(--r);font-size:var(--fs-2)}
 .btn.primary{background:var(--main);color:var(--bg);font-weight:700}
 
@@ -144,6 +155,17 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .answer-ghost .caret{display:inline-block;width:2px;height:1.2em;background:var(--caret);margin-left:2px;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:0}}
 .game-hint{margin-top:3rem}
+#pane-game{position:relative}
+.pause{position:absolute;inset:-.5rem -1rem;z-index:5;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;text-align:center;padding:1rem;animation:fadein .15s ease}
+.pause[hidden]{display:none}
+.pause h2{font-size:var(--fs-4);font-weight:500}
+.pause p{color:var(--sub);font-size:var(--fs-2);max-width:22rem}
+.pause p b{color:var(--error);font-weight:500}
+.pause .acts{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+.pause .btn{min-width:7rem;height:3rem}
+.toast{position:fixed;left:50%;top:calc(4.25rem + env(safe-area-inset-top));transform:translate(-50%,-1rem);z-index:20;background:var(--sub-alt);color:var(--text);font-size:var(--fs-1);padding:.625rem 1rem;border-radius:var(--r);box-shadow:0 .25rem 1rem rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .35s var(--spring);max-width:calc(100% - 2rem);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast b{color:var(--error);font-weight:500}
 
 /* keypad: one element, two widths, slides between sides on the shared spring.
    the side arrow lives in the space the compact pad leaves free; the size toggle sits in the hud corner */
@@ -185,6 +207,20 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .res-top .tag{display:inline-block;margin-top:.5rem;color:var(--bg);background:var(--main);font-size:var(--fs-1);font-weight:700;padding:.125rem .5rem;border-radius:.25rem}
 .res-top .tag[hidden]{display:none}
 #pane-results .stats3{text-align:center;margin-bottom:2rem}
+.res-top .tag.warn{background:none;color:var(--error);border:1px solid var(--error)}
+.run-chart{margin-bottom:2rem}
+.run-chart .head{display:flex;justify-content:space-between;gap:1rem;margin-bottom:.5rem}
+.run-chart .head .label:last-child{white-space:normal;text-align:right}
+.run-chart .plot{position:relative;height:6rem}
+#r-chart{width:100%;height:100%;display:block;overflow:visible;touch-action:pan-y}
+.run-chart .slow{margin-top:.625rem;font-size:var(--fs-1);color:var(--sub);line-height:1.6}
+.run-chart .slow span{color:var(--text);direction:ltr;unicode-bidi:bidi-override}
+/* celebration */
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+.clap{position:fixed;bottom:-3rem;z-index:31;font-size:2.5rem;pointer-events:none;animation:clap-rise 2.4s cubic-bezier(.2,.7,.3,1) forwards}
+.clap i{display:inline-block;font-style:normal;animation:clap .32s ease-in-out infinite alternate}
+@keyframes clap-rise{0%{transform:translateY(0);opacity:0}10%{opacity:1}75%{opacity:1}100%{transform:translateY(-70vh);opacity:0}}
+@keyframes clap{from{transform:scale(1) rotate(-12deg)}to{transform:scale(1.25) rotate(10deg)}}
 .res-actions{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 .res-actions .btn{height:3.25rem}
 #pane-results .kbd-hint{margin-top:.75rem}
@@ -292,6 +328,9 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       <span class="hud-r"><span>score <span id="score" style="color:var(--text)">0</span></span>
         <button class="tool" id="zoom-btn" onclick="toggleBig()" title="shrink / enlarge pad" aria-label="shrink or enlarge pad">
           <svg viewBox="0 0 24 24"><g class="za"><path d="M15 3h6v6"/><path d="M21 3l-7 7"/></g><g class="za"><path d="M9 21H3v-6"/><path d="M3 21l7-7"/></g></svg>
+        </button>
+        <button class="tool" id="pause-btn" onclick="pauseGame()" title="pause" aria-label="pause">
+          <svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>
         </button></span></div>
     <div class="problem" id="problem"></div>
     <div class="answer-wrap" id="native-wrap">
@@ -306,7 +345,17 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       </div>
       <div class="pad" id="pad"></div>
     </div>
-    <p class="kbd-hint game-hint"><kbd>tab</kbd> restart · <kbd>esc</kbd> quit</p>
+    <p class="kbd-hint game-hint"><kbd>tab</kbd> restart · <kbd>esc</kbd> pause</p>
+    <div class="pause" id="pause" hidden>
+      <h2>paused</h2>
+      <p><b>this run won't be saved.</b> a pause is free thinking time, so it can't count toward your trend. you can still finish it for practice.</p>
+      <div class="acts">
+        <button class="btn primary" onclick="resumeGame()">resume</button>
+        <button class="btn" onclick="startGame()">restart</button>
+        <button class="btn" onclick="go('config')">quit</button>
+      </div>
+      <p class="kbd-hint"><kbd>esc</kbd> resume · <kbd>tab</kbd> restart</p>
+    </div>
   </section>
 
   <!-- RESULTS -->
@@ -315,6 +364,11 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       <div class="res-score" id="r-score">0</div>
       <div class="label" id="r-sub"></div>
       <span class="tag" id="r-pb" hidden>new personal best</span>
+    </div>
+    <div class="run-chart" id="run-chart">
+      <div class="head"><span class="label">solve time per problem</span><span class="label" id="r-med"></span></div>
+      <div class="plot"><svg id="r-chart" aria-label="solve time for each problem in this run"></svg><div class="tip" id="r-tip"></div></div>
+      <p class="slow" id="r-slow"></p>
     </div>
     <div class="stats3">
       <div><div class="v" id="r-best">–</div><div class="label">mode best</div></div>
@@ -383,19 +437,21 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       </div>
       <div id="auth-signed" class="set" style="display:none">
         <p class="set-note" id="auth-who"></p>
-        <p class="set-note">theme, number style, font, mode and ranges are saved to your account.</p>
+        <p class="set-note">theme, number style, font, mode and your configurations are saved to your account.</p>
         <div><button class="linkbtn" onclick="signOut()">sign out</button></div>
       </div>
     </div>
-    <p class="version">v0.4</p>
+    <p class="version">v0.5</p>
   </section>
 
 </main>
 
-<!-- RANGES SHEET -->
+<!-- CONFIGURATIONS SHEET -->
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet-h"><span id="sheet-title">ranges</span></div>
+    <div class="sheet-h"><span id="sheet-title">configurations</span><span class="label" id="sheet-dur"></span></div>
+    <div class="cfg-list" id="cfg-list"></div>
+    <span class="label">ranges</span>
     <div class="rg">
       <span class="label">addition · subtraction runs it in reverse</span>
       <div class="rg-row"><input type="number" inputmode="numeric" id="a1"><span>–</span><input type="number" inputmode="numeric" id="a2"><span class="x">+</span><input type="number" inputmode="numeric" id="a3"><span>–</span><input type="number" inputmode="numeric" id="a4"></div>
@@ -404,13 +460,20 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       <span class="label">multiplication · division runs it in reverse</span>
       <div class="rg-row"><input type="number" inputmode="numeric" id="m1"><span>–</span><input type="number" inputmode="numeric" id="m2"><span class="x">×</span><input type="number" inputmode="numeric" id="m3"><span>–</span><input type="number" inputmode="numeric" id="m4"></div>
     </div>
-    <p class="set-note">each set of ranges keeps its own trend.</p>
+    <p class="set-note">every configuration keeps its own trend and personal best for each duration.</p>
+    <div class="rg">
+      <span class="label" id="save-lbl"></span>
+      <div class="save-row"><input class="field" id="cfg-name" maxlength="24" placeholder="name this configuration" autocomplete="off"><button class="btn" onclick="saveConfig()">save</button></div>
+      <p class="set-note" id="save-note"></p>
+    </div>
     <div class="sheet-foot">
-      <button class="linkbtn" onclick="resetRanges()">reset to default</button>
+      <button class="linkbtn" onclick="resetRanges()">reset ranges</button>
       <button class="btn primary" onclick="closeRanges()">done</button>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 /* ---------------- themes (palettes from monkeytype theme file) ---------------- */
@@ -437,15 +500,16 @@ const DEF_ADD=[2,100,2,100], DEF_MUL=[2,12,2,100];
 /* touch-first devices default to the on-screen pad */
 const COARSE=window.matchMedia&&matchMedia("(pointer: coarse)").matches;
 const S={theme:"serika_dark",numsys:"western",kbd:COARSE?"pad":"native",side:"right",big:true,font:"mono",dur:120,
-  ops:{add:true,sub:true,mul:true,div:true},add:[...DEF_ADD],mul:[...DEF_MUL],size:100};
+  ops:{add:true,sub:true,mul:true,div:true},add:[...DEF_ADD],mul:[...DEF_MUL],configs:[],size:100};
 let game=null, sessions=[], hist=[], histLoading=true, authPending=true;
 
 /* ---------------- preferences ----------------
    look & feel and the mode follow the account (user_metadata.prefs); input setup and size stay per device */
-const SYNC_KEYS=["theme","numsys","font","dur","ops","add","mul"], DEV_KEYS=["kbd","side","big","size"];
+const SYNC_KEYS=["theme","numsys","font","dur","ops","add","mul","configs"], DEV_KEYS=["kbd","side","big","size"];
 const okRange=v=>Array.isArray(v)&&v.length===4&&v.every(n=>Number.isInteger(n)&&n>0)&&v[0]<=v[1]&&v[2]<=v[3];
 const VALID={theme:v=>v in THEMES,numsys:v=>v in NUMSYS,font:v=>v==="mono"||v==="sans",dur:v=>[30,60,120,300].includes(v),
   ops:v=>v&&typeof v==="object"&&OPS.every(k=>typeof v[k]==="boolean")&&OPS.some(k=>v[k]),add:okRange,mul:okRange,
+  configs:v=>Array.isArray(v)&&v.length<=40&&v.every(c=>c&&typeof c.name==="string"&&c.name.length<=24&&VALID.ops(c.ops)&&okRange(c.add)&&okRange(c.mul)),
   kbd:v=>v==="native"||v==="pad",side:v=>v==="left"||v==="right",big:v=>typeof v==="boolean",size:v=>Number.isInteger(v)&&v>=80&&v<=130};
 function mergePrefs(p,keys){ if(p&&typeof p==="object")keys.forEach(k=>{ if(k in p&&VALID[k](p[k]))S[k]=p[k]; }); }
 function pick(keys){ const o={};keys.forEach(k=>o[k]=S[k]);return o; }
@@ -526,8 +590,32 @@ function modeKey(cfg){
 }
 const curCfg=()=>({ops:S.ops,add:S.add,mul:S.mul});
 const curMode=()=>modeKey(curCfg());
-const isDefaultRanges=()=>modeKey(curCfg())===modeKey({ops:S.ops});
-function modeName(){ return OPS.filter(k=>S.ops[k]).map(k=>GLYPH[k]).join(" ")+" · "+S.dur+"s"+(isDefaultRanges()?"":" · custom"); }
+
+/* built-in configurations, named from the modes already in the run history.
+   each one drills a different weakness; anything else is "custom" until saved */
+const PRESETS=[
+  ["zetamac","the full test: all four operations at standard ranges","add,sub,mul,div"],
+  ["times tables","the whole 12 × 12 grid, both directions","mul,div",null,[2,12,2,12]],
+  ["hard tables","only the 6–12 corner, where the slow facts live","mul",null,[6,12,6,12]],
+  ["6s to 9s","the 6–9 rows, multiplying and dividing","mul,div",null,[6,9,6,12]],
+  ["warm-up","the easy 2–7 rows, to get moving","mul,div",null,[2,7,2,12]],
+  ["borrowing","taking a teen away, like 23 − 14","sub",[1,9,11,19]],
+  ["small sums","+ and − facts up to 12, pure speed","add,sub",[2,12,2,12]],
+  ["addition","two-digit sums on their own","add"],
+  ["subtraction","two-digit subtraction on its own","sub"],
+  ["2-digit ×","two-digit by two-digit products","mul",null,[2,100,2,100]],
+].map(([name,why,ops,add,mul])=>({name,why,ops:Object.fromEntries(OPS.map(k=>[k,ops.split(",").includes(k)])),add:add||[...DEF_ADD],mul:mul||[...DEF_MUL]}));
+const allConfigs=()=>[...PRESETS,...S.configs.map(c=>({...c,custom:true}))];
+const configFor=key=>allConfigs().find(c=>modeKey(c)===key);
+function cfgSummary(c){
+  const o=OPS.filter(k=>c.ops[k]), g=o.map(k=>GLYPH[k]).join(" ");
+  const parts=[];
+  if(c.ops.add||c.ops.sub)parts.push(`${c.add[0]}–${c.add[1]} + ${c.add[2]}–${c.add[3]}`);
+  if(c.ops.mul||c.ops.div)parts.push(`${c.mul[0]}–${c.mul[1]} × ${c.mul[2]}–${c.mul[3]}`);
+  return g+" · "+parts.join(", ");
+}
+const cfgName=()=>configFor(curMode())?.name||"custom";
+function modeName(){ return cfgName()+" · "+S.dur+"s"; }
 
 /* ---------------- run history (cloud when signed in, this device otherwise) ---------------- */
 function localRuns(){ const r=lsGet("leomac.runs");return Array.isArray(r)?r:[]; }
@@ -560,7 +648,7 @@ function go(p){
   $("pane-"+p).classList.add("show");
   $("nav-config").classList.toggle("active",p==="config");
   $("nav-settings").classList.toggle("active",p==="settings");
-  if(game&&p!=="game"){clearInterval(game.tick);game=null;}
+  if(game&&p!=="game")abandonGame();
   document.body.classList.toggle("playing",p==="game");
   if(p==="config")renderHome();
 }
@@ -571,7 +659,8 @@ function renderHome(){
   $("mode-name").textContent=modeName();
   const loading=authPending||(histLoading&&sbUser);
   $("trend-src").textContent=loading?"loading…":sbUser?"synced":"this device";
-  $("ranges-btn").textContent="ranges · "+(isDefaultRanges()?"default":"custom")+" ›";
+  $("mode-name").title=cfgSummary(curCfg());
+  $("ranges-btn").textContent="configuration · "+cfgName()+" ›";
   syncOpsUI();syncDurUI();
   const runs=modeRuns(), key=curMode()+"@"+S.dur;
   const pb=runs.length?Math.max(...runs.map(r=>r.score)):null;
@@ -629,7 +718,7 @@ $("spark").addEventListener("pointermove",sparkHover);
 $("spark").addEventListener("pointerdown",sparkHover);
 $("spark").addEventListener("pointerleave",e=>{ if(e.pointerType==="mouse")sparkLeave(); });
 document.addEventListener("pointerdown",e=>{ if(!e.target.closest("#spark"))sparkLeave(); });
-window.addEventListener("resize",()=>{ if($("pane-config").classList.contains("show"))renderHome(); });
+window.addEventListener("resize",()=>{ if($("pane-config").classList.contains("show"))renderHome(); if($("pane-results").classList.contains("show")&&runBars.length)drawRunChart(runBars.map(b=>b.p)); });
 function swapTrend(){ const t=$("trend");t.classList.remove("swap");void t.offsetWidth;t.classList.add("swap"); }
 
 /* ---------------- mode controls ---------------- */
@@ -660,7 +749,53 @@ function readRange(k,fallback){
   if(v[2]>v[3])v=[v[0],v[1],v[3],v[2]];
   return v;
 }
-function openRanges(){ fillRanges();$("sheet").hidden=false;setTimeout(()=>$("a1").focus({preventScroll:true}),COARSE?400:50); }
+function openRanges(){ fillRanges();renderConfigs();$("save-note").textContent="";$("cfg-name").value="";$("sheet").hidden=false;$("sheet").firstElementChild.scrollTop=0; }
+function renderConfigs(){
+  const cur=modeKey({ops:S.ops,add:readRange("add",S.add),mul:readRange("mul",S.mul)});
+  $("sheet-dur").textContent="bests at "+S.dur+"s";
+  $("cfg-list").innerHTML=allConfigs().map((c,i)=>{
+    const k=modeKey(c), all=hist.filter(r=>r.mode===k), here=all.filter(r=>r.dur===S.dur);
+    const st=here.length?`<b>${Math.max(...here.map(r=>r.score))}</b>${here.length} run${here.length>1?"s":""}`
+      :all.length?`${all.length} run${all.length>1?"s":""}<br>other times`:"new";
+    const del=c.custom?`<span class="del" role="button" aria-label="delete ${c.name}" data-del="${i-PRESETS.length}">×</span>`:"";
+    return `<button class="cfg${k===cur?" on":""}" data-i="${i}"><span class="t"><span class="nm">${esc(c.name)}</span><span class="why">${esc(c.why||cfgSummary(c))}</span></span><span class="st">${st}</span>${del}</button>`;
+  }).join("");
+  $("save-lbl").textContent="save as a configuration · "+OPS.filter(k=>S.ops[k]).map(k=>GLYPH[k]).join(" ");
+}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("cfg-list").addEventListener("click",e=>{
+  const d=e.target.closest("[data-del]");
+  if(d){
+    const c=S.configs[+d.dataset.del];
+    if(c&&confirm(`delete "${c.name}"? its runs stay in your history.`)){S.configs=S.configs.filter(x=>x!==c);savePrefs();renderConfigs();}
+    return;
+  }
+  const b=e.target.closest(".cfg");if(!b)return;
+  pickConfig(allConfigs()[+b.dataset.i]);
+});
+/* choosing a configuration you've only played at another length jumps to the length you've played most */
+function pickConfig(c){
+  S.ops={...c.ops};S.add=[...c.add];S.mul=[...c.mul];
+  const k=modeKey(c), all=hist.filter(r=>r.mode===k);
+  if(all.length&&!all.some(r=>r.dur===S.dur)){
+    const n={};all.forEach(r=>n[r.dur]=(n[r.dur]||0)+1);
+    S.dur=+Object.keys(n).sort((a,b)=>n[b]-n[a])[0];
+  }
+  fillRanges();$("sheet").hidden=true;
+  savePrefs();swapTrend();renderHome();
+}
+function saveConfig(){
+  const name=$("cfg-name").value.trim(), note=$("save-note");
+  const c={name,ops:{...S.ops},add:readRange("add",S.add),mul:readRange("mul",S.mul)};
+  if(!name){$("cfg-name").focus();note.textContent="give it a name first.";return;}
+  const same=configFor(modeKey(c));
+  if(same){note.textContent=`these settings are already "${same.name}".`;return;}
+  if(allConfigs().some(x=>x.name.toLowerCase()===name.toLowerCase())){note.textContent="that name is taken.";return;}
+  S.configs=[...S.configs,c];S.add=c.add;S.mul=c.mul;
+  $("cfg-name").value="";note.textContent=`saved "${name}".`;
+  savePrefs();renderConfigs();renderHome();
+}
+["a1","a2","a3","a4","m1","m2","m3","m4"].forEach(id=>$(id).addEventListener("input",()=>renderConfigs()));
 function closeRanges(){
   if($("sheet").hidden)return;
   const before=curMode();
@@ -672,7 +807,7 @@ function closeRanges(){
 }
 function resetRanges(){ S.add=[...DEF_ADD];S.mul=[...DEF_MUL];fillRanges(); }
 $("sheet").addEventListener("click",e=>{ if(e.target.id==="sheet")closeRanges(); });
-$("sheet").addEventListener("keydown",e=>{ if(e.key==="Enter")closeRanges(); });
+$("sheet").addEventListener("keydown",e=>{ if(e.key==="Enter"){ if(e.target.id==="cfg-name")saveConfig(); else if(e.target.tagName==="INPUT")closeRanges(); } });
 
 /* ---------------- game loop (zetamac-faithful) ---------------- */
 function makeProblem(){
@@ -691,22 +826,56 @@ function renderProblem(){
 }
 function startGame(){
   /* restarting mid-run abandons it without saving, like monkeytype */
-  if(game){clearInterval(game.tick);game=null;}
-  game={score:0,left:S.dur,p:makeProblem(),buf:"",attempted:0,firstTryMiss:0,missedThis:false,t0:Date.now(),pStart:Date.now(),problems:[]};
+  if(game)abandonGame();
+  game={score:0,left:S.dur,p:makeProblem(),buf:"",attempted:0,firstTryMiss:0,missedThis:false,paused:false,unranked:false,t0:Date.now(),pStart:Date.now(),problems:[]};
   go("game");
+  $("pause").hidden=true;
   $("score").textContent="0";$("time").textContent=game.left;
   renderProblem();applyKbd();clearAnswer();
+  runClock();
+  focusAnswer();
+}
+function runClock(){
+  clearInterval(game.tick);
   game.tick=setInterval(()=>{
     game.left--;$("time").textContent=game.left;
     if(game.left<=0)endGame();
   },1000);
+}
+function focusAnswer(){
   if(S.kbd==="native")setTimeout(()=>$("answer").focus(),50);
   else if(document.activeElement)document.activeElement.blur();
+}
+/* a paused run is never saved: the pause is free thinking time */
+function pauseGame(){
+  if(!game||game.paused)return;
+  clearInterval(game.tick);
+  game.paused=true;game.unranked=true;game.pausedAt=Date.now();
+  $("pause").hidden=false;
+  if(document.activeElement)document.activeElement.blur();
+}
+function resumeGame(){
+  if(!game||!game.paused)return;
+  game.pStart+=Date.now()-game.pausedAt;
+  game.paused=false;$("pause").hidden=true;
+  runClock();focusAnswer();
+}
+function abandonGame(){
+  clearInterval(game.tick);
+  const played=S.dur-game.left;
+  if(played>0||game.score>0)toast(`<b>run not saved</b> · quit at ${game.score} with ${game.left}s left`);
+  game=null;
+}
+document.addEventListener("visibilitychange",()=>{ if(document.hidden)pauseGame(); });
+let toastTimer=null;
+function toast(html){
+  const t=$("toast");t.innerHTML=html;t.classList.add("show");
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200);
 }
 function renderGhost(){ $("ghost").textContent=toNum(game?game.buf:"",S.numsys); }
 function clearAnswer(){game.buf="";$("answer").value="";renderGhost();}
 function checkBuf(){
-  if(game.buf===""||isNaN(+game.buf))return;
+  if(game.paused||game.buf===""||isNaN(+game.buf))return;
   if(+game.buf===game.p.ans){
     game.score++;game.attempted++;
     if(game.missedThis)game.firstTryMiss++;
@@ -736,39 +905,120 @@ function padPress(k){
 }
 function endGame(){
   clearInterval(game.tick);
-  const dur=S.dur, mode=curMode();
+  const g=game, dur=S.dur, mode=curMode(), saved=!g.unranked;
   const prevBest=Math.max(-1,...modeRuns().map(r=>r.score));
-  const acc=game.attempted?Math.round(100*(game.attempted-game.firstTryMiss)/game.attempted):null;
-  const avgMs=game.problems.length?Math.round(game.problems.reduce((a,p)=>a+p.ms,0)/game.problems.length):null;
+  const acc=g.attempted?Math.round(100*(g.attempted-g.firstTryMiss)/g.attempted):null;
+  const avgMs=g.problems.length?Math.round(g.problems.reduce((a,p)=>a+p.ms,0)/g.problems.length):null;
   const run={
-    duration_s:dur,score:game.score,
+    duration_s:dur,score:g.score,
     first_try_accuracy:acc,avg_ms_per_problem:avgMs,
     config:{ops:{...S.ops},add:[...S.add],mul:[...S.mul],numsys:S.numsys,kbd:S.kbd==="pad"?(S.big?"pad":"one"):"native"},
-    problems:game.problems
+    problems:g.problems
   };
-  recordRun({at:new Date().toISOString(),dur,score:game.score,acc,mode});
-  sessions.unshift({score:game.score,name:modeName(),at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
-  $("r-score").textContent=game.score;
+  /* a new peak on this mode's graph: beats every earlier run of the same configuration and length */
+  const isPb=saved&&g.score>0&&prevBest>=0&&g.score>prevBest;
+  if(saved)recordRun({at:new Date().toISOString(),dur,score:g.score,acc,mode});
+  sessions.unshift({score:g.score,name:modeName()+(saved?"":" · not saved"),at:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});
+  $("r-score").textContent=g.score;
   $("r-sub").textContent="problems · "+modeName();
-  $("r-pb").hidden=!(game.score>0&&game.score>prevBest&&prevBest>=0);
-  $("r-best").textContent=Math.max(prevBest,game.score);
-  $("r-avg").textContent=game.score?(dur/game.score).toFixed(1):"–";
+  const tag=$("r-pb");
+  tag.hidden=!(isPb||!saved);
+  tag.classList.toggle("warn",!saved);
+  tag.textContent=saved?"new personal best":"not saved · this run was paused";
+  $("r-best").textContent=Math.max(prevBest,saved?g.score:-1)<0?"–":Math.max(prevBest,saved?g.score:-1);
+  $("r-avg").textContent=g.score?(dur/g.score).toFixed(1):"–";
   $("r-acc").textContent=acc===null?"–":acc+"%";
   $("sess-list").innerHTML=sessions.slice(0,8).map(s=>
-    `<div class="sess-row"><span>${s.at} · ${s.name}</span><span class="s">${s.score}</span></div>`).join("");
-  $("sess-note").textContent=sbUser?"saving…":"offline run — sign in via settings to sync across devices.";
+    `<div class="sess-row"><span>${s.at} · ${esc(s.name)}</span><span class="s">${s.score}</span></div>`).join("");
+  $("sess-note").textContent=!saved?"paused runs stay off your trend.":sbUser?"saving…":"offline run — sign in via settings to sync across devices.";
   game=null;
   go("results");
-  saveRun(run).then(r=>{
+  drawRunChart(g.problems);
+  if(isPb)celebrate();
+  if(saved)saveRun(run).then(r=>{
     if(sbUser)$("sess-note").textContent=r.cloud?"synced to supabase ● claude can read your history any time.":"couldn't reach supabase — saved on this device only.";
   });
 }
 
-/* ---------------- keyboard: tab = new run in the same mode, esc = back home ---------------- */
+/* ---------------- results: solve time of every problem in the run ---------------- */
+let runBars=[];
+function drawRunChart(ps){
+  const box=$("run-chart"), svg=$("r-chart");
+  $("r-tip").classList.remove("show");
+  box.style.display=ps.length?"":"none";
+  if(!ps.length){runBars=[];return;}
+  const W=svg.clientWidth||300,H=svg.clientHeight||96;
+  const secs=ps.map(p=>p.ms/1000), sorted=[...secs].sort((a,b)=>a-b), med=sorted[Math.floor(sorted.length/2)];
+  /* one very slow problem shouldn't flatten the rest: cap the scale and let that bar run to the top */
+  const top=Math.max(Math.min(sorted[sorted.length-1],med*4),.5);
+  /* short runs keep narrow bars instead of one slab across the chart */
+  const slot=Math.min(W/ps.length,18), bw=Math.max(slot-(slot>6?3:1),1);
+  runBars=ps.map((p,i)=>{ const h=Math.max(Math.min(secs[i]/top,1)*(H-2),2);return{p,s:secs[i],x:i*slot,cx:i*slot+slot/2,y:H-h,h}; });
+  const my=H-Math.min(med/top,1)*(H-2);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  svg.innerHTML=runBars.map((b,i)=>`<rect data-i="${i}" x="${b.x.toFixed(1)}" y="${b.y.toFixed(1)}" width="${bw.toFixed(1)}" height="${b.h.toFixed(1)}" rx="${Math.min(bw/2,2)}" fill="${b.p.missed?"var(--error)":"var(--main)"}" opacity=".85"/>`).join("")+
+    `<line x1="0" x2="${W}" y1="${my}" y2="${my}" stroke="var(--text)" stroke-width="1" stroke-dasharray="2 4" opacity=".5"/>`;
+  $("r-med").textContent="median "+med.toFixed(1)+"s"+(ps.some(p=>p.missed)?" · red: missed first try":"");
+  const slow=[...runBars].sort((a,b)=>b.s-a.s).slice(0,3);
+  $("r-slow").innerHTML="slowest: "+slow.map(b=>`<span>${esc(toNum(b.p.p,S.numsys))}</span> ${b.s.toFixed(1)}s`).join(" · ");
+}
+function runChartHover(e){
+  if(!runBars.length)return;
+  const box=$("r-chart").getBoundingClientRect(),x=e.clientX-box.left;
+  const b=runBars.reduce((a,c)=>Math.abs(c.cx-x)<Math.abs(a.cx-x)?c:a);
+  const tip=$("r-tip");
+  tip.innerHTML=`${esc(toNum(b.p.p+" = "+b.p.ans,S.numsys))} <span>· ${b.s.toFixed(1)}s${b.p.missed?" · missed":""}</span>`;
+  tip.style.left=Math.min(Math.max(b.cx,64),box.width-64)+"px";
+  tip.style.top=(b.y-6)+"px";
+  tip.classList.add("show");
+}
+$("r-chart").addEventListener("pointermove",runChartHover);
+$("r-chart").addEventListener("pointerdown",runChartHover);
+$("r-chart").addEventListener("pointerleave",e=>{ if(e.pointerType==="mouse")$("r-tip").classList.remove("show"); });
+document.addEventListener("pointerdown",e=>{ if(!e.target.closest("#r-chart"))$("r-tip").classList.remove("show"); });
+
+/* ---------------- celebration: confetti and clapping on a new personal best ---------------- */
+function celebrate(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=document.createElement("canvas");cv.id="confetti";document.body.appendChild(cv);
+  const dpr=window.devicePixelRatio||1, W=innerWidth, H=innerHeight;
+  cv.width=W*dpr;cv.height=H*dpr;
+  const ctx=cv.getContext("2d");ctx.scale(dpr,dpr);
+  const css=getComputedStyle(document.documentElement);
+  const cols=["--main","--text","--error","--sub"].map(v=>css.getPropertyValue(v).trim()).concat(["#7ad7f0","#f5a3c7","#9be37a"]);
+  /* two cannons from the bottom corners */
+  const bits=Array.from({length:170},(_,i)=>{
+    const left=i%2===0, a=(left?-60:-120)*Math.PI/180+(Math.random()-.5)*.7, v=9+Math.random()*9;
+    return{x:left?0:W,y:H*.85,vx:Math.cos(a)*v,vy:Math.sin(a)*v,w:5+Math.random()*6,h:8+Math.random()*8,r:Math.random()*6,vr:(Math.random()-.5)*.35,c:cols[i%cols.length],t:Math.random()*6};
+  });
+  const t0=performance.now();
+  (function frame(now){
+    const el=now-t0;
+    ctx.clearRect(0,0,W,H);
+    bits.forEach(b=>{
+      b.vy+=.28;b.vx*=.99;b.vy*=.99;b.x+=b.vx;b.y+=b.vy;b.r+=b.vr;b.t+=.12;
+      ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.r);ctx.scale(1,Math.cos(b.t));
+      ctx.globalAlpha=Math.max(0,1-Math.max(0,el-2200)/900);
+      ctx.fillStyle=b.c;ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);ctx.restore();
+    });
+    if(el<3100)requestAnimationFrame(frame);else cv.remove();
+  })(t0);
+  for(let i=0;i<7;i++){
+    const c=document.createElement("span");c.className="clap";c.setAttribute("aria-hidden","true");
+    c.innerHTML="<i>👏</i>";
+    c.style.left=(8+i*13+Math.random()*6)+"%";
+    c.style.animationDelay=(i*.12+Math.random()*.2)+"s";
+    c.firstChild.style.animationDelay=(Math.random()*.3)+"s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),3400);
+  }
+}
+
+/* ---------------- keyboard: tab = new run in the same mode, esc = pause / resume ---------------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
     if(!$("sheet").hidden){closeRanges();return;}
-    if(game){e.preventDefault();go("config");}
+    if(game){e.preventDefault();game.paused?resumeGame():pauseGame();}
     return;
   }
   if(e.key!=="Tab"||e.shiftKey||e.ctrlKey||e.metaKey||e.altKey)return;
