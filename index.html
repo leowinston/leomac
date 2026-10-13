@@ -138,6 +138,8 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .rg-row .x{color:var(--main);padding:0 .25rem}
 .rg-row input{width:100%;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:1rem;padding:.625rem .5rem;text-align:center;-moz-appearance:textfield}
 .rg-row input::-webkit-inner-spin-button{-webkit-appearance:none}
+/* the panel clips its overflow, so the focus ring sits inside the box instead of around it */
+.rg-row input:focus-visible{outline-offset:-2px}
 /* touch: apple-style picker wheels instead of typing */
 .wheel{--ih:2rem;position:relative;height:calc(var(--ih) * 3);background:var(--sub-alt);border-radius:var(--r);overflow:hidden}
 .wheel::before{content:"";position:absolute;left:.25rem;right:.25rem;top:var(--ih);height:var(--ih);border-radius:calc(var(--r) - .25rem);background:var(--bg)}
@@ -193,6 +195,15 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .answer-ghost .caret{display:inline-block;width:2px;height:1.2em;background:var(--caret);margin-left:2px;animation:blink 1s infinite}
 @keyframes blink{50%{opacity:0}}
 .game-hint{margin-top:3rem}
+.game-hint button{font:inherit;color:inherit;padding:.25rem;border-radius:.375rem;transition:color .15s}
+@media (hover:hover){.game-hint button:hover{color:var(--main)}}
+/* desktop: zetamac layout, answer to the right of the problem and the whole test sitting higher */
+@media (hover:hover) and (pointer:fine) and (min-width:40rem){
+  #pane-game.show{margin:10vh 0 auto}
+  .qa{display:flex;align-items:center;justify-content:center;gap:1rem}
+  .qa .problem{margin-bottom:0}
+  .qa .answer-ghost{margin:0}
+}
 #pane-game{position:relative}
 .pause{position:absolute;inset:-.5rem -1rem;z-index:5;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;text-align:center;padding:1rem;animation:fadein .15s ease}
 .pause[hidden]{display:none}
@@ -201,8 +212,9 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .pause p b{color:var(--error);font-weight:500}
 .pause .acts{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
 .pause .btn{min-width:7rem;height:3rem}
-.toast{position:fixed;left:50%;top:calc(4.25rem + env(safe-area-inset-top));transform:translate(-50%,-1rem);z-index:20;background:var(--sub-alt);color:var(--text);font-size:var(--fs-1);padding:.625rem 1rem;border-radius:var(--r);box-shadow:0 .25rem 1rem rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .35s var(--spring);max-width:calc(100% - 2rem);text-align:center}
-.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast{position:fixed;left:50%;top:calc(4.25rem + env(safe-area-inset-top));transform:translate(-50%,-1rem);z-index:20;background:var(--sub-alt);color:var(--text);font-size:var(--fs-1);padding:.625rem 1rem;border-radius:var(--r);box-shadow:0 .25rem 1rem rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .2s,transform .35s var(--spring);max-width:calc(100% - 2rem);text-align:center;cursor:pointer}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast.show.tap{transform:translate(-50%,0) scale(.94);transition:opacity .2s,transform .07s ease-out}
 .toast b{color:var(--error);font-weight:500}
 
 /* keypad: one element, two widths, slides between sides on the shared spring.
@@ -383,11 +395,13 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
         <button class="tool" id="pause-btn" onclick="pauseGame()" title="pause" aria-label="pause">
           <svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>
         </button></span></div>
-    <div class="problem" id="problem"></div>
-    <div class="answer-wrap" id="native-wrap">
-      <input id="answer" inputmode="numeric" autocomplete="off">
+    <div class="qa">
+      <div class="problem" id="problem"></div>
+      <div class="answer-wrap" id="native-wrap">
+        <input id="answer" inputmode="numeric" autocomplete="off">
+      </div>
+      <div class="answer-ghost" id="ghost-wrap" style="display:none"><span id="ghost"></span><span class="caret"></span></div>
     </div>
-    <div class="answer-ghost" id="ghost-wrap" style="display:none"><span id="ghost"></span><span class="caret"></span></div>
     <div class="pad-area" id="pad-area" style="display:none">
       <div id="side-slot">
         <button id="side-btn" onclick="swapSide()" title="move pad to the other side" aria-label="move pad to the other side">
@@ -396,7 +410,7 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       </div>
       <div class="pad" id="pad"></div>
     </div>
-    <p class="kbd-hint game-hint"><kbd>tab</kbd> restart · <kbd>esc</kbd> pause</p>
+    <p class="kbd-hint game-hint"><button onclick="startGame(true)"><kbd>tab</kbd> restart</button> · <button onclick="pauseGame()"><kbd>esc</kbd> pause</button></p>
     <div class="pause" id="pause" hidden>
       <h2>paused</h2>
       <p><b>this run won't be saved.</b> a pause is free thinking time, so it can't count toward your trend. you can still finish it for practice.</p>
@@ -916,9 +930,9 @@ function makeProblem(){
 function renderProblem(){
   $("problem").textContent=toNum(game.p.txt,S.numsys)+" =";
 }
-function startGame(){
-  /* restarting mid-run abandons it without saving, like monkeytype */
-  if(game)abandonGame();
+function startGame(quiet){
+  /* restarting mid-run abandons it without saving, like monkeytype. tab restarts are deliberate, so no toast */
+  if(game)abandonGame(quiet);
   game={score:0,left:S.dur,p:makeProblem(),buf:"",attempted:0,firstTryMiss:0,missedThis:false,paused:false,unranked:false,t0:Date.now(),pStart:Date.now(),problems:[]};
   go("game");
   $("pause").hidden=true;
@@ -952,18 +966,24 @@ function resumeGame(){
   game.paused=false;$("pause").hidden=true;
   runClock();focusAnswer();
 }
-function abandonGame(){
+function abandonGame(quiet){
   clearInterval(game.tick);
   const played=S.dur-game.left;
-  if(played>0||game.score>0)toast(`<b>run not saved</b> · quit at ${game.score} with ${game.left}s left`);
+  if(!quiet&&(played>0||game.score>0))toast(`<b>run not saved</b> · quit at ${game.score} with ${game.left}s left`);
   game=null;
 }
 document.addEventListener("visibilitychange",()=>{ if(document.hidden)pauseGame(); });
 let toastTimer=null;
 function toast(html){
-  const t=$("toast");t.innerHTML=html;t.classList.add("show");
+  const t=$("toast");t.innerHTML=html;t.classList.remove("tap");t.classList.add("show");
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),3200);
 }
+/* tap the toast: it presses in, then goes */
+$("toast").addEventListener("click",()=>{
+  const t=$("toast");if(!t.classList.contains("show"))return;
+  clearTimeout(toastTimer);t.classList.add("tap");
+  toastTimer=setTimeout(()=>t.classList.remove("show"),90);
+});
 function renderGhost(){ $("ghost").textContent=toNum(game?game.buf:"",S.numsys); }
 function clearAnswer(){game.buf="";$("answer").value="";renderGhost();}
 function checkBuf(){
@@ -1119,7 +1139,7 @@ document.addEventListener("keydown",e=>{
   const a=document.activeElement;
   if(!$("sheet").hidden||(a&&a.tagName==="INPUT"&&a.id!=="answer"))return;
   e.preventDefault();
-  startGame();
+  startGame(true);
 });
 
 /* ---------------- keypad ---------------- */
