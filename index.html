@@ -76,6 +76,11 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
   #pane-config .controls{margin-top:auto}
   #pane-config .chart{height:5.5rem;margin:.75rem 0}
   #pane-config .op{height:3.5rem}
+  /* ranges open: the chart folds away so the wheels fit in the space it leaves */
+  #pane-config .chart{overflow:hidden;transition:height .45s cubic-bezier(.2,.8,.2,1),margin .45s cubic-bezier(.2,.8,.2,1),opacity .2s}
+  #pane-config.ranging .chart{height:0;margin:0;opacity:0}
+  .rrow-in>.label{display:none}
+  .wheel{--ih:1.75rem}
 }
 .trend-head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:.5rem}
 .trend-head .mode{color:var(--text)}
@@ -95,7 +100,17 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .trend.swap{animation:rise .35s cubic-bezier(.2,.8,.2,1)}
 
 .controls{display:flex;flex-direction:column;gap:.75rem}
-.ctl-head{display:flex;justify-content:space-between;align-items:center}
+.ctl-head{display:flex;justify-content:space-between;align-items:center;margin:-.25rem 0}
+/* ranges (left) and configurations (right) sit over the operations as icons */
+.ctl-btn{width:2.5rem;height:2.5rem;margin:0 -.5rem;display:flex;align-items:center;justify-content:center;border-radius:var(--r);color:var(--sub);font-size:1.375rem;transition:color .15s,background .25s}
+.ctl-btn.on{color:var(--main)}
+@media (hover:hover){.ctl-btn:hover{color:var(--main)}}
+.ctl-btn svg *{transition:transform var(--spring-t) var(--spring),opacity .2s;transform-box:fill-box;transform-origin:center}
+/* the range icon (a track with two thumbs) folds away into a chevron that sends the operations back down */
+#rng-btn .ic-down{opacity:0;transform:rotate(-90deg) scale(.4)}
+#rng-btn.on .ic-range{opacity:0;transform:scale(.4)}
+#rng-btn.on .ic-down{opacity:1;transform:none}
+@media (hover:hover){#rng-btn:not(.on):hover .th1{transform:translateX(-2px)}#rng-btn:not(.on):hover .th2{transform:translateX(2px)}}
 .linkbtn{font-size:var(--fs-1);color:var(--sub);padding:.375rem 0;transition:color .15s}
 @media (hover:hover){.linkbtn:hover{color:var(--main)}}
 /* operations: four toggles, glyph first. at least one stays on */
@@ -104,7 +119,30 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .op .g{font-size:var(--fs-4);line-height:1}
 .op .n{font-size:var(--fs-1)}
 .op.on{background:var(--sub-alt);border-color:var(--sub-alt);color:var(--text)}
+.op.on{background:color-mix(in srgb,var(--main) 13%,var(--sub-alt));border-color:color-mix(in srgb,var(--main) 45%,var(--sub-alt))}
 .op.on .g{color:var(--main)}
+/* ranges panel: opens under the operations. home is bottom-anchored on phones, so growing it lifts the operations */
+.rng,.rrow{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.rng.open,.rrow.show{grid-template-rows:1fr}
+.rng-in,.rrow-in{min-height:0;overflow:hidden}
+.rng{opacity:0}
+.rng.open{opacity:1}
+.rrow{opacity:0}
+.rrow.show{opacity:1}
+.rrow-in{padding-top:.75rem;display:flex;flex-direction:column;gap:.375rem}
+.rrow .label .x{color:var(--main)}
+.rg-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.375rem;align-items:center;color:var(--sub)}
+.rg-row .x{color:var(--main);padding:0 .25rem}
+.rg-row input{width:100%;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:1rem;padding:.625rem .5rem;text-align:center;-moz-appearance:textfield}
+.rg-row input::-webkit-inner-spin-button{-webkit-appearance:none}
+/* touch: apple-style picker wheels instead of typing */
+.wheel{--ih:2rem;position:relative;height:calc(var(--ih) * 3);background:var(--sub-alt);border-radius:var(--r);overflow:hidden}
+.wheel::before{content:"";position:absolute;left:.25rem;right:.25rem;top:var(--ih);height:var(--ih);border-radius:calc(var(--r) - .25rem);background:var(--bg)}
+.wheel .sc{position:relative;height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none;padding:var(--ih) 0;
+  -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+.wheel .sc::-webkit-scrollbar{display:none}
+.wi{height:var(--ih);display:flex;align-items:center;justify-content:center;scroll-snap-align:center;color:var(--sub);font-size:1rem;font-variant-numeric:tabular-nums;transition:color .12s}
+.wi.c{color:var(--main);font-weight:500}
 .durs{background:var(--sub-alt);border-radius:var(--r);padding:.25rem;gap:.25rem}
 .durs button{height:2.5rem;border-radius:calc(var(--r) - .25rem);color:var(--sub);font-size:var(--fs-2);transition:background .15s,color .15s}
 .durs button.on{background:var(--bg);color:var(--main)}
@@ -116,17 +154,17 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 /* ---------- configurations sheet ---------- */
 .sheet-bg{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;animation:fadein .2s ease}
 .sheet-bg[hidden]{display:none}
-.sheet{width:100%;max-width:var(--w);max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:1.25rem 1rem calc(1.25rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:1.25rem;animation:sheet-up .45s var(--spring)}
-@media (min-width:40rem){.sheet-bg{align-items:center}.sheet{border-radius:var(--r-lg);padding:1.5rem}}
+.sheet-bg.out{opacity:0;transition:opacity .25s ease}
+.sheet{width:100%;max-width:var(--w);max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:.5rem 1rem calc(1.25rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:1rem;animation:sheet-up .45s var(--spring)}
+.sheet.away{transform:translateY(calc(100% + 2rem))!important;transition:transform .28s cubic-bezier(.4,0,1,1)!important}
+/* the grab bar says "swipe me down"; desktop gets a close button instead */
+.grab{width:2.5rem;height:.3125rem;border-radius:1rem;background:var(--sub);opacity:.5;margin:0 auto;flex-shrink:0}
+.sheet-x{display:none;color:var(--sub);font-size:1.25rem;width:2.25rem;height:2.25rem;margin:-.5rem -.5rem -.5rem 0;align-items:center;justify-content:center;border-radius:var(--r)}
+@media (hover:hover){.sheet-x:hover{color:var(--main)}}
+@media (min-width:40rem){.sheet-bg{align-items:center}.sheet{border-radius:var(--r-lg);padding:1.5rem}.grab{display:none}.sheet-x{display:flex}}
 @keyframes sheet-up{from{transform:translateY(40%);opacity:0}}
 .sheet-h{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-3)}
-.rg{display:flex;flex-direction:column;gap:.5rem}
-.rg-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:.375rem;align-items:center;color:var(--sub)}
-.rg-row .x{color:var(--main);padding:0 .25rem}
-.rg-row input,.field{width:100%;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:1rem;padding:.625rem .5rem}
-.rg-row input{text-align:center;-moz-appearance:textfield}
-.rg-row input::-webkit-inner-spin-button{-webkit-appearance:none}
-.sheet-foot{display:flex;justify-content:space-between;align-items:center}
+.field{width:100%;background:var(--sub-alt);border:none;border-radius:var(--r);color:var(--text);font-size:1rem;padding:.625rem .5rem}
 .cfg-list{display:flex;flex-direction:column;gap:.375rem}
 .cfg{display:flex;align-items:center;gap:.75rem;width:100%;text-align:left;padding:.625rem .75rem;border-radius:var(--r);background:var(--sub-alt);border:2px solid transparent;transition:border-color .15s}
 .cfg.on{border-color:var(--main)}
@@ -135,9 +173,6 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 .cfg .why{color:var(--sub);font-size:var(--fs-1)}
 .cfg .st{text-align:right;font-size:var(--fs-1);color:var(--sub);white-space:nowrap}
 .cfg .st b{display:block;color:var(--text);font-weight:500;font-size:var(--fs-2)}
-.cfg .del{color:var(--sub);font-size:1rem;width:2rem;height:2rem;margin:-.5rem -.375rem -.5rem 0;border-radius:var(--r);flex-shrink:0}
-@media (hover:hover){.cfg .del:hover{color:var(--error)}}
-.save-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem}
 .btn{background:var(--sub-alt);color:var(--main);padding:.625rem 1.25rem;border-radius:var(--r);font-size:var(--fs-2)}
 .btn.primary{background:var(--main);color:var(--bg);font-weight:700}
 
@@ -307,12 +342,25 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
     </div>
 
     <div class="controls">
-      <div class="ctl-head rise" style="--i:1"><span class="label">mode</span><button class="linkbtn" id="ranges-btn" onclick="openRanges()"></button></div>
-      <div class="ops rise" style="--i:2" id="ops" role="group" aria-label="operations">
-        <button class="op" data-op="add"><span class="g">+</span><span class="n">add</span></button>
-        <button class="op" data-op="sub"><span class="g">−</span><span class="n">sub</span></button>
-        <button class="op" data-op="mul"><span class="g">×</span><span class="n">mul</span></button>
-        <button class="op" data-op="div"><span class="g">÷</span><span class="n">div</span></button>
+      <div class="ctl-head rise" style="--i:1">
+        <button class="ctl-btn" id="rng-btn" onclick="toggleRanges()" title="ranges" aria-label="ranges" aria-expanded="false" aria-controls="rng">
+          <svg class="i" viewBox="0 0 24 24"><g class="ic-range"><path d="M2 19h20M2 19v2.5M12 19v2.5M22 19v2.5" opacity=".5"/><path d="M6.5 19h11" stroke-width="2.75"/><path class="th1" d="M6.5 19V8.5M3.5 3.5l3 4 3-4z"/><path class="th2" d="M17.5 19V8.5M14.5 3.5l3 4 3-4z"/></g><path class="ic-down" d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button class="ctl-btn" id="cfg-btn" onclick="openSheet()" title="configurations" aria-label="configurations" aria-haspopup="dialog">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12.65l9.17 4.16a2 2 0 0 0 1.66 0L22 12.65"/><path d="M2 17.65l9.17 4.16a2 2 0 0 0 1.66 0L22 17.65"/></svg>
+        </button>
+      </div>
+      <div class="rise" style="--i:2">
+        <div class="ops" id="ops" role="group" aria-label="operations">
+          <button class="op" data-op="add"><span class="g">+</span><span class="n">add</span></button>
+          <button class="op" data-op="sub"><span class="g">−</span><span class="n">sub</span></button>
+          <button class="op" data-op="mul"><span class="g">×</span><span class="n">mul</span></button>
+          <button class="op" data-op="div"><span class="g">÷</span><span class="n">div</span></button>
+        </div>
+        <div class="rng" id="rng" role="region" aria-label="ranges"><div class="rng-in">
+          <div class="rrow" data-k="add"><div class="rrow-in"><span class="label"><span class="x">+ −</span> add · sub</span><div class="rg-row" id="rr-add"></div></div></div>
+          <div class="rrow" data-k="mul"><div class="rrow-in"><span class="label"><span class="x">× ÷</span> mul · div</span><div class="rg-row" id="rr-mul"></div></div></div>
+        </div></div>
       </div>
       <div class="durs rise" style="--i:3" id="durs" role="group" aria-label="duration">
         <button data-d="30">30s</button><button data-d="60">60s</button><button data-d="120">120s</button><button data-d="300">300s</button>
@@ -437,7 +485,7 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       </div>
       <div id="auth-signed" class="set" style="display:none">
         <p class="set-note" id="auth-who"></p>
-        <p class="set-note">theme, number style, font, mode and your configurations are saved to your account.</p>
+        <p class="set-note">theme, number style, font, mode and ranges are saved to your account.</p>
         <div><button class="linkbtn" onclick="signOut()">sign out</button></div>
       </div>
     </div>
@@ -449,27 +497,9 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 <!-- CONFIGURATIONS SHEET -->
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet-h"><span id="sheet-title">configurations</span></div>
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-h"><span id="sheet-title">configurations</span><button class="sheet-x" onclick="closeSheet()" aria-label="close">×</button></div>
     <div class="cfg-list" id="cfg-list"></div>
-    <span class="label">ranges</span>
-    <div class="rg">
-      <span class="label">addition · subtraction runs it in reverse</span>
-      <div class="rg-row"><input type="number" inputmode="numeric" id="a1"><span>–</span><input type="number" inputmode="numeric" id="a2"><span class="x">+</span><input type="number" inputmode="numeric" id="a3"><span>–</span><input type="number" inputmode="numeric" id="a4"></div>
-    </div>
-    <div class="rg">
-      <span class="label">multiplication · division runs it in reverse</span>
-      <div class="rg-row"><input type="number" inputmode="numeric" id="m1"><span>–</span><input type="number" inputmode="numeric" id="m2"><span class="x">×</span><input type="number" inputmode="numeric" id="m3"><span>–</span><input type="number" inputmode="numeric" id="m4"></div>
-    </div>
-    <p class="set-note">a configuration is the operations and ranges. pair it with any duration on the home screen; each pairing is its own mode with its own trend.</p>
-    <div class="rg">
-      <span class="label" id="save-lbl"></span>
-      <div class="save-row"><input class="field" id="cfg-name" maxlength="24" placeholder="name this configuration" autocomplete="off"><button class="btn" onclick="saveConfig()">save</button></div>
-      <p class="set-note" id="save-note"></p>
-    </div>
-    <div class="sheet-foot">
-      <button class="linkbtn" onclick="resetRanges()">reset ranges</button>
-      <button class="btn primary" onclick="closeRanges()">done</button>
-    </div>
   </div>
 </div>
 
@@ -593,7 +623,8 @@ const curMode=()=>modeKey(curCfg());
 
 /* built-in configurations: operations + ranges only, never a duration.
    each one drills a different weakness; a mode is a configuration plus a duration.
-   anything that matches none of these, or a saved one, simply has no name */
+   anything that matches none of these simply has no name.
+   naming your own is switched off for now; ones saved earlier stay in S.configs, just unlisted */
 const PRESETS=[
   ["zetamac","the full test: all four operations at standard ranges","add,sub,mul,div"],
   ["times tables","the whole 12 × 12 grid, both directions","mul,div",null,[2,12,2,12]],
@@ -602,7 +633,7 @@ const PRESETS=[
   ["borrowing","taking a teen away, like 23 − 14","sub",[1,9,11,19]],
   ["2-digit ×","two-digit by two-digit products","mul",null,[2,100,2,100]],
 ].map(([name,why,ops,add,mul])=>({name,why,ops:Object.fromEntries(OPS.map(k=>[k,ops.split(",").includes(k)])),add:add||[...DEF_ADD],mul:mul||[...DEF_MUL]}));
-const allConfigs=()=>[...PRESETS,...S.configs.map(c=>({...c,custom:true}))];
+const allConfigs=()=>PRESETS;
 const configFor=key=>allConfigs().find(c=>modeKey(c)===key);
 function cfgSummary(c){
   const o=OPS.filter(k=>c.ops[k]), g=o.map(k=>GLYPH[k]).join(" ");
@@ -659,8 +690,8 @@ function renderHome(){
   const loading=authPending||(histLoading&&sbUser);
   $("trend-src").textContent=loading?"loading…":sbUser?"synced":"this device";
   $("mode-name").title=cfgSummary(curCfg());
-  $("ranges-btn").textContent="configuration"+(cfgName()?" · "+cfgName():"")+" ›";
-  syncOpsUI();syncDurUI();
+  $("cfg-btn").title="configurations"+(cfgName()?" · "+cfgName():"");
+  syncOpsUI();syncDurUI();syncRangeUI();
   const runs=modeRuns(), key=curMode()+"@"+S.dur;
   const pb=runs.length?Math.max(...runs.map(r=>r.score)):null;
   const pbEl=$("pb-v");
@@ -737,69 +768,135 @@ $("durs").addEventListener("click",e=>{
 });
 function syncDurUI(){ document.querySelectorAll("#durs button").forEach(b=>b.classList.toggle("on",+b.dataset.d===S.dur)); }
 
-/* ---------------- ranges sheet ---------------- */
-const RANGE_IDS={add:["a1","a2","a3","a4"],mul:["m1","m2","m3","m4"]};
-function fillRanges(){ for(const k in RANGE_IDS)RANGE_IDS[k].forEach((id,i)=>$(id).value=S[k][i]); }
-function readRange(k,fallback){
-  let v=RANGE_IDS[k].map(id=>Math.round(+$(id).value));
-  if(!v.every(n=>n>0))return fallback;
-  /* a reversed pair is almost certainly a typo, not a request for an empty range */
-  if(v[0]>v[1])v=[v[1],v[0],v[2],v[3]];
-  if(v[2]>v[3])v=[v[0],v[1],v[3],v[2]];
-  return v;
+/* ---------------- ranges panel: wheels on touch, typing with a keyboard ---------------- */
+const WHEEL_MAX=300;
+let rngOpen=false, rngBuilt=false;
+const rngCtl={add:[],mul:[]};
+/* move one bound; if it crosses its partner, the partner comes along */
+function setBound(k,i,v){
+  const r=[...S[k]], j=i^1;
+  r[i]=v;
+  if(i<j?r[i]>r[j]:r[i]<r[j])r[j]=v;
+  if(r.join()===S[k].join())return;
+  S[k]=r;savePrefs();swapTrend();renderHome();
 }
-function openRanges(){ fillRanges();renderConfigs();$("save-note").textContent="";$("cfg-name").value="";$("sheet").hidden=false;$("sheet").firstElementChild.scrollTop=0; }
+function makeWheel(onPick){
+  const el=document.createElement("div");el.className="wheel";
+  const sc=document.createElement("div");sc.className="sc";el.appendChild(sc);
+  let n=0, val=1, cur=null, raf=0, timer=0;
+  const grow=m=>{ let h="";for(let i=n+1;i<=m;i++)h+=`<div class="wi">${i}</div>`;sc.insertAdjacentHTML("beforeend",h);n=m; };
+  grow(WHEEL_MAX);
+  const ih=()=>sc.firstElementChild.offsetHeight||32;
+  const idx=()=>Math.min(n-1,Math.max(0,Math.round(sc.scrollTop/ih())));
+  function mark(){ raf=0;const c=sc.children[idx()];if(c!==cur){cur&&cur.classList.remove("c");cur=c;c.classList.add("c");} }
+  function settle(){ const v=idx()+1;if(v!==val){val=v;onPick(v);} }
+  sc.addEventListener("scroll",()=>{ if(!raf)raf=requestAnimationFrame(mark);clearTimeout(timer);timer=setTimeout(settle,140); },{passive:true});
+  sc.addEventListener("click",e=>{ const it=e.target.closest(".wi");if(it)sc.scrollTo({top:(+it.textContent-1)*ih(),behavior:"smooth"}); });
+  return{el,get:()=>val,set(v,smooth){ if(v>n)grow(v);val=v;sc.scrollTo({top:(v-1)*ih(),behavior:smooth?"smooth":"auto"});mark(); }};
+}
+function makeInput(k,i){
+  const el=document.createElement("input");
+  el.type="number";el.inputMode="numeric";el.min=1;el.setAttribute("aria-label",`${k==="add"?"add · sub":"mul · div"} ${["first low","first high","second low","second high"][i]}`);
+  el.addEventListener("change",()=>{
+    const v=Math.round(+el.value);
+    if(v>0)setBound(k,i,v);
+    el.value=S[k][i];
+  });
+  el.addEventListener("keydown",e=>{ if(e.key==="Enter")el.blur(); });
+  return{el,get:()=>+el.value,set(v){ if(document.activeElement!==el)el.value=v; }};
+}
+function buildRanges(){
+  rngBuilt=true;
+  for(const k of ["add","mul"]){
+    const row=$("rr-"+k);
+    [0,1,2,3].forEach(i=>{
+      const c=COARSE?makeWheel(v=>setBound(k,i,v)):makeInput(k,i);
+      rngCtl[k].push(c);row.appendChild(c.el);
+      if(i<3){ const sp=document.createElement("span");
+        if(i===1){sp.className="x";sp.textContent=k==="add"?"+":"×";} else sp.textContent="–";
+        row.appendChild(sp); }
+    });
+  }
+}
+function syncRangeUI(instant){
+  document.querySelectorAll(".rrow").forEach(r=>{
+    const k=r.dataset.k, on=k==="add"?S.ops.add||S.ops.sub:S.ops.mul||S.ops.div;
+    r.classList.toggle("show",on);r.inert=!on;
+  });
+  if(!rngOpen)return;
+  for(const k in rngCtl)rngCtl[k].forEach((c,i)=>{ if(instant||c.get()!==S[k][i])c.set(S[k][i],!instant); });
+}
+function toggleRanges(open){
+  rngOpen=open??!rngOpen;
+  if(rngOpen&&!rngBuilt)buildRanges();
+  $("rng").classList.toggle("open",rngOpen);
+  $("pane-config").classList.toggle("ranging",rngOpen);
+  /* the chart was squeezed while folded; redraw it at full size once it is back */
+  if(!rngOpen)setTimeout(()=>{ if(!rngOpen&&$("pane-config").classList.contains("show"))renderHome(); },470);
+  $("rng").inert=!rngOpen;
+  const b=$("rng-btn");b.classList.toggle("on",rngOpen);b.setAttribute("aria-expanded",rngOpen);
+  const lbl=rngOpen?"close ranges":"ranges";b.title=lbl;b.setAttribute("aria-label",lbl);
+  syncRangeUI(true);
+  /* on a short screen the panel pushes start below the fold: bring it back */
+  if(rngOpen)setTimeout(()=>{ if(rngOpen)document.querySelector(".start").scrollIntoView({block:"nearest",behavior:"smooth"}); },460);
+}
+$("rng").inert=true;
+
+/* ---------------- configurations sheet: tap a preset, swipe down to close ---------------- */
+function openSheet(){
+  renderConfigs();
+  const bg=$("sheet"), sh=bg.firstElementChild;
+  bg.classList.remove("out");sh.classList.remove("away");sh.style.transform="";
+  bg.hidden=false;sh.scrollTop=0;
+}
+function closeSheet(){
+  const bg=$("sheet"), sh=bg.firstElementChild;
+  if(bg.hidden||bg.classList.contains("out"))return;
+  bg.classList.add("out");sh.classList.add("away");
+  setTimeout(()=>{ bg.hidden=true;bg.classList.remove("out");sh.classList.remove("away");sh.style.transform="";sh.style.transition=""; },280);
+}
 function renderConfigs(){
-  const cur=modeKey({ops:S.ops,add:readRange("add",S.add),mul:readRange("mul",S.mul)});
+  const cur=curMode();
   $("cfg-list").innerHTML=allConfigs().map((c,i)=>{
     const k=modeKey(c), n=hist.filter(r=>r.mode===k).length;
     const st=n?`${n} run${n>1?"s":""}`:"new";
-    const del=c.custom?`<span class="del" role="button" aria-label="delete ${c.name}" data-del="${i-PRESETS.length}">×</span>`:"";
-    return `<button class="cfg${k===cur?" on":""}" data-i="${i}"><span class="t"><span class="nm">${esc(c.name)}</span><span class="why">${esc(c.why||cfgSummary(c))}</span></span><span class="st">${st}</span>${del}</button>`;
+    return `<button class="cfg${k===cur?" on":""}" data-i="${i}"><span class="t"><span class="nm">${esc(c.name)}</span><span class="why">${esc(c.why||cfgSummary(c))}</span></span><span class="st">${st}</span></button>`;
   }).join("");
-  $("save-lbl").textContent="save as a configuration · "+opsGlyphs();
 }
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 $("cfg-list").addEventListener("click",e=>{
-  const d=e.target.closest("[data-del]");
-  if(d){
-    const c=S.configs[+d.dataset.del];
-    if(c&&confirm(`delete "${c.name}"? its runs stay in your history.`)){S.configs=S.configs.filter(x=>x!==c);savePrefs();renderConfigs();}
-    return;
-  }
-  const b=e.target.closest(".cfg");if(!b)return;
-  pickConfig(allConfigs()[+b.dataset.i]);
+  const b=e.target.closest(".cfg");if(b)pickConfig(allConfigs()[+b.dataset.i]);
 });
 /* a configuration sets operations and ranges only; the duration stays whatever is selected */
 function pickConfig(c){
   S.ops={...c.ops};S.add=[...c.add];S.mul=[...c.mul];
-  fillRanges();$("sheet").hidden=true;
+  closeSheet();
   savePrefs();swapTrend();renderHome();
 }
-function saveConfig(){
-  const name=$("cfg-name").value.trim(), note=$("save-note");
-  const c={name,ops:{...S.ops},add:readRange("add",S.add),mul:readRange("mul",S.mul)};
-  if(!name){$("cfg-name").focus();note.textContent="give it a name first.";return;}
-  const same=configFor(modeKey(c));
-  if(same){note.textContent=`these settings are already "${same.name}".`;return;}
-  if(allConfigs().some(x=>x.name.toLowerCase()===name.toLowerCase())){note.textContent="that name is taken.";return;}
-  S.configs=[...S.configs,c];S.add=c.add;S.mul=c.mul;
-  $("cfg-name").value="";note.textContent=`saved "${name}".`;
-  savePrefs();renderConfigs();renderHome();
-}
-["a1","a2","a3","a4","m1","m2","m3","m4"].forEach(id=>$(id).addEventListener("input",()=>renderConfigs()));
-function closeRanges(){
-  if($("sheet").hidden)return;
-  const before=curMode();
-  S.add=readRange("add",S.add);S.mul=readRange("mul",S.mul);
-  $("sheet").hidden=true;
-  if(document.activeElement)document.activeElement.blur();
-  if(curMode()!==before){savePrefs();swapTrend();}
-  renderHome();
-}
-function resetRanges(){ S.add=[...DEF_ADD];S.mul=[...DEF_MUL];fillRanges(); }
-$("sheet").addEventListener("click",e=>{ if(e.target.id==="sheet")closeRanges(); });
-$("sheet").addEventListener("keydown",e=>{ if(e.key==="Enter"){ if(e.target.id==="cfg-name")saveConfig(); else if(e.target.tagName==="INPUT")closeRanges(); } });
+$("sheet").addEventListener("click",e=>{ if(e.target.id==="sheet")closeSheet(); });
+/* drag down from the top of the list (or the grab bar) to dismiss; a short or slow drag springs back */
+(()=>{
+  const sh=$("sheet").firstElementChild;
+  let d=null;
+  sh.addEventListener("touchstart",e=>{
+    d=sh.scrollTop<=0?{y0:e.touches[0].clientY,dy:0,on:false,y:e.touches[0].clientY,t:performance.now(),v:0}:null;
+  },{passive:true});
+  sh.addEventListener("touchmove",e=>{
+    if(!d)return;
+    const y=e.touches[0].clientY, dy=y-d.y0;
+    if(!d.on){ if(dy<=0||sh.scrollTop>0){d=null;return;} d.on=true;sh.style.transition="none"; }
+    e.preventDefault();
+    const now=performance.now();d.v=(y-d.y)/Math.max(now-d.t,1);d.y=y;d.t=now;
+    d.dy=Math.max(0,dy);sh.style.transform=`translateY(${d.dy}px)`;
+  },{passive:false});
+  const end=()=>{
+    if(!d||!d.on){d=null;return;}
+    const far=d.dy>sh.offsetHeight*.25||d.v>.5;d=null;
+    if(far){sh.style.transition="";closeSheet();}
+    else{sh.style.transition="transform .45s var(--spring)";sh.style.transform="";}
+  };
+  sh.addEventListener("touchend",end);sh.addEventListener("touchcancel",end);
+})();
 
 /* ---------------- game loop (zetamac-faithful) ---------------- */
 function makeProblem(){
@@ -1009,7 +1106,8 @@ function celebrate(){
 /* ---------------- keyboard: tab = new run in the same mode, esc = pause / resume ---------------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
-    if(!$("sheet").hidden){closeRanges();return;}
+    if(!$("sheet").hidden){closeSheet();return;}
+    if(rngOpen&&!game){toggleRanges(false);return;}
     if(game){e.preventDefault();game.paused?resumeGame():pauseGame();}
     return;
   }
