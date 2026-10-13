@@ -449,7 +449,7 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
 <!-- CONFIGURATIONS SHEET -->
 <div class="sheet-bg" id="sheet" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-    <div class="sheet-h"><span id="sheet-title">configurations</span><span class="label" id="sheet-dur"></span></div>
+    <div class="sheet-h"><span id="sheet-title">configurations</span></div>
     <div class="cfg-list" id="cfg-list"></div>
     <span class="label">ranges</span>
     <div class="rg">
@@ -460,7 +460,7 @@ body.intro #pane-config .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both;a
       <span class="label">multiplication · division runs it in reverse</span>
       <div class="rg-row"><input type="number" inputmode="numeric" id="m1"><span>–</span><input type="number" inputmode="numeric" id="m2"><span class="x">×</span><input type="number" inputmode="numeric" id="m3"><span>–</span><input type="number" inputmode="numeric" id="m4"></div>
     </div>
-    <p class="set-note">every configuration keeps its own trend and personal best for each duration.</p>
+    <p class="set-note">a configuration is the operations and ranges. pair it with any duration on the home screen; each pairing is its own mode with its own trend.</p>
     <div class="rg">
       <span class="label" id="save-lbl"></span>
       <div class="save-row"><input class="field" id="cfg-name" maxlength="24" placeholder="name this configuration" autocomplete="off"><button class="btn" onclick="saveConfig()">save</button></div>
@@ -591,18 +591,15 @@ function modeKey(cfg){
 const curCfg=()=>({ops:S.ops,add:S.add,mul:S.mul});
 const curMode=()=>modeKey(curCfg());
 
-/* built-in configurations, named from the modes already in the run history.
-   each one drills a different weakness; anything else is "custom" until saved */
+/* built-in configurations: operations + ranges only, never a duration.
+   each one drills a different weakness; a mode is a configuration plus a duration.
+   anything that matches none of these, or a saved one, simply has no name */
 const PRESETS=[
   ["zetamac","the full test: all four operations at standard ranges","add,sub,mul,div"],
-  ["times tables","the whole 12 × 12 grid, both directions","mul,div",null,[2,12,2,12]],
-  ["hard tables","only the 6–12 corner, where the slow facts live","mul",null,[6,12,6,12]],
-  ["6s to 9s","the 6–9 rows, multiplying and dividing","mul,div",null,[6,9,6,12]],
-  ["warm-up","the easy 2–7 rows, to get moving","mul,div",null,[2,7,2,12]],
-  ["borrowing","taking a teen away, like 23 − 14","sub",[1,9,11,19]],
-  ["small sums","+ and − facts up to 12, pure speed","add,sub",[2,12,2,12]],
-  ["addition","two-digit sums on their own","add"],
-  ["subtraction","two-digit subtraction on its own","sub"],
+  ["times tables","the whole 12 × 12 grid, both directions","mul,div",null,[2,12,2,12]],
+  ["teen tables","the 11–19 rows past the 12 × 12 grid: 14 × 7, 98 ÷ 14","mul,div",null,[11,19,2,12]],
+  ["times a digit","two-digit numbers times 2–9, both ways: 7 × 48, 336 ÷ 7","mul,div",null,[2,9,10,99]],
+  ["borrowing","taking a teen away, like 23 − 14","sub",[1,9,11,19]],
   ["2-digit ×","two-digit by two-digit products","mul",null,[2,100,2,100]],
 ].map(([name,why,ops,add,mul])=>({name,why,ops:Object.fromEntries(OPS.map(k=>[k,ops.split(",").includes(k)])),add:add||[...DEF_ADD],mul:mul||[...DEF_MUL]}));
 const allConfigs=()=>[...PRESETS,...S.configs.map(c=>({...c,custom:true}))];
@@ -614,8 +611,10 @@ function cfgSummary(c){
   if(c.ops.mul||c.ops.div)parts.push(`${c.mul[0]}–${c.mul[1]} × ${c.mul[2]}–${c.mul[3]}`);
   return g+" · "+parts.join(", ");
 }
-const cfgName=()=>configFor(curMode())?.name||"custom";
-function modeName(){ return cfgName()+" · "+S.dur+"s"; }
+const cfgName=()=>configFor(curMode())?.name||"";
+const opsGlyphs=()=>OPS.filter(k=>S.ops[k]).map(k=>GLYPH[k]).join(" ");
+/* the mode: configuration name when there is one (otherwise just the operations) and the duration */
+function modeName(){ return (cfgName()||opsGlyphs())+" · "+S.dur+"s"; }
 
 /* ---------------- run history (cloud when signed in, this device otherwise) ---------------- */
 function localRuns(){ const r=lsGet("leomac.runs");return Array.isArray(r)?r:[]; }
@@ -660,7 +659,7 @@ function renderHome(){
   const loading=authPending||(histLoading&&sbUser);
   $("trend-src").textContent=loading?"loading…":sbUser?"synced":"this device";
   $("mode-name").title=cfgSummary(curCfg());
-  $("ranges-btn").textContent="configuration · "+cfgName()+" ›";
+  $("ranges-btn").textContent="configuration"+(cfgName()?" · "+cfgName():"")+" ›";
   syncOpsUI();syncDurUI();
   const runs=modeRuns(), key=curMode()+"@"+S.dur;
   const pb=runs.length?Math.max(...runs.map(r=>r.score)):null;
@@ -752,15 +751,13 @@ function readRange(k,fallback){
 function openRanges(){ fillRanges();renderConfigs();$("save-note").textContent="";$("cfg-name").value="";$("sheet").hidden=false;$("sheet").firstElementChild.scrollTop=0; }
 function renderConfigs(){
   const cur=modeKey({ops:S.ops,add:readRange("add",S.add),mul:readRange("mul",S.mul)});
-  $("sheet-dur").textContent="bests at "+S.dur+"s";
   $("cfg-list").innerHTML=allConfigs().map((c,i)=>{
-    const k=modeKey(c), all=hist.filter(r=>r.mode===k), here=all.filter(r=>r.dur===S.dur);
-    const st=here.length?`<b>${Math.max(...here.map(r=>r.score))}</b>${here.length} run${here.length>1?"s":""}`
-      :all.length?`${all.length} run${all.length>1?"s":""}<br>other times`:"new";
+    const k=modeKey(c), n=hist.filter(r=>r.mode===k).length;
+    const st=n?`${n} run${n>1?"s":""}`:"new";
     const del=c.custom?`<span class="del" role="button" aria-label="delete ${c.name}" data-del="${i-PRESETS.length}">×</span>`:"";
     return `<button class="cfg${k===cur?" on":""}" data-i="${i}"><span class="t"><span class="nm">${esc(c.name)}</span><span class="why">${esc(c.why||cfgSummary(c))}</span></span><span class="st">${st}</span>${del}</button>`;
   }).join("");
-  $("save-lbl").textContent="save as a configuration · "+OPS.filter(k=>S.ops[k]).map(k=>GLYPH[k]).join(" ");
+  $("save-lbl").textContent="save as a configuration · "+opsGlyphs();
 }
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 $("cfg-list").addEventListener("click",e=>{
@@ -773,14 +770,9 @@ $("cfg-list").addEventListener("click",e=>{
   const b=e.target.closest(".cfg");if(!b)return;
   pickConfig(allConfigs()[+b.dataset.i]);
 });
-/* choosing a configuration you've only played at another length jumps to the length you've played most */
+/* a configuration sets operations and ranges only; the duration stays whatever is selected */
 function pickConfig(c){
   S.ops={...c.ops};S.add=[...c.add];S.mul=[...c.mul];
-  const k=modeKey(c), all=hist.filter(r=>r.mode===k);
-  if(all.length&&!all.some(r=>r.dur===S.dur)){
-    const n={};all.forEach(r=>n[r.dur]=(n[r.dur]||0)+1);
-    S.dur=+Object.keys(n).sort((a,b)=>n[b]-n[a])[0];
-  }
   fillRanges();$("sheet").hidden=true;
   savePrefs();swapTrend();renderHome();
 }
