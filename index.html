@@ -92,7 +92,8 @@ body.intro footer{animation:fadein .6s ease 1s both}
 .sess-note{color:var(--sub);font-size:.62rem;font-family:var(--sans);font-weight:300;margin-top:8px}
 
 /* ---------- game ---------- */
-.hud{display:flex;justify-content:space-between;color:var(--sub);font-size:.85rem;margin-bottom:8vh}
+.hud{display:flex;justify-content:space-between;align-items:center;color:var(--sub);font-size:.85rem;margin-bottom:6vh}
+.hud-r{display:flex;align-items:center;gap:14px}
 .hud .time{color:var(--main);font-weight:500}
 /* arabic-indic digits are bidi "AN": without an override the operands of "124 ÷ 2" render swapped */
 .problem,#ghost{direction:ltr;unicode-bidi:bidi-override}
@@ -106,29 +107,39 @@ body.intro footer{animation:fadein .6s ease 1s both}
 .flash-wrong{animation:shake .25s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 
-/* keypad: one element, two sizes, slides between sides on the shared spring */
-.pad-tools{display:flex;justify-content:center;gap:10px;margin:14px 0 12px}
-.tool{width:44px;height:34px;border-radius:var(--r);background:var(--sub-alt);color:var(--sub);display:inline-flex;align-items:center;justify-content:center;transition:opacity .25s,color .15s}
-@media (hover:hover){.tool:hover{color:var(--main)}}
-.tool svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
-.tool svg *{transition:transform var(--spring-t) var(--spring);transform-origin:center;transform-box:fill-box}
-#side-btn.to-left svg path{transform:rotate(180deg)}
-#side-btn.off{opacity:.25;pointer-events:none}
+/* keypad: one element, two widths, slides between sides on the shared spring.
+   the side arrow lives in the space the compact pad leaves free; the size toggle sits in the hud corner */
+.tool{width:34px;height:30px;border-radius:var(--r);background:var(--sub-alt);color:var(--sub);display:inline-flex;align-items:center;justify-content:center;transition:color .15s}
+@media (hover:hover){.tool:hover,#side-btn:hover{color:var(--main)}}
+.tool svg,#side-btn svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.tool svg{width:16px;height:16px}
+.tool svg *,#side-btn svg *{transition:transform var(--spring-t) var(--spring);transform-origin:center;transform-box:fill-box}
 /* maximize arrows point out; when the pad is big each corner flips about its own centre so they point in */
 #zoom-btn.big .za{transform:rotate(180deg)}
-.pad-area{width:100%;container-type:inline-size}
-.pad{--pw:min(284px,100cqw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;user-select:none;-webkit-user-select:none;
+.pad-area{--gap:10px;--kh:clamp(56px,10vh,80px);--cpw:min(calc(100cqw - 84px),300px);--aw:58px;--free:calc(100cqw - var(--cpw) - var(--gap));
+  width:100%;margin-top:20px;position:relative;container-type:inline-size}
+.pad{--pw:min(400px,100cqw);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:var(--kh);gap:var(--gap);user-select:none;-webkit-user-select:none;
   width:var(--pw);transform:translateX(calc((100cqw - var(--pw)) / 2));
   transition:width var(--spring-t) var(--spring),transform var(--spring-t) var(--spring)}
-.pad.compact{--pw:206px}
+.pad.compact{--pw:var(--cpw)}
 .pad.compact.left{transform:translateX(0)}
-.pad.compact.right{transform:translateX(calc(100cqw - 206px))}
-.pad button{background:var(--sub-alt);color:var(--text);border-radius:var(--r);font-size:1.5rem;line-height:1.2;padding:16px 0;display:flex;align-items:center;justify-content:center;
-  transition:padding var(--spring-t) var(--spring),font-size var(--spring-t) var(--spring),background .12s,color .12s}
-.pad.compact button{font-size:1.25rem;padding:13px 0}
+.pad.compact.right{transform:translateX(calc(100cqw - var(--cpw)))}
+.pad button{background:var(--sub-alt);color:var(--text);border-radius:10px;font-size:1.9rem;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:font-size var(--spring-t) var(--spring),background .12s,color .12s}
+.pad.compact button{font-size:1.7rem}
 .pad button.press{background:var(--main);color:var(--bg)}
-.pad .fn{color:var(--sub);font-size:1.1rem}
-.pad.compact .fn{font-size:.95rem}
+.pad .fn{color:var(--sub);font-size:1.3rem}
+.pad.compact .fn{font-size:1.2rem}
+/* slot carries the slide so the button's own transform stays free for the press bounce */
+#side-slot{position:absolute;top:50%;left:0;width:var(--aw);z-index:1;
+  transform:translate(calc(var(--cpw) + var(--gap) + (var(--free) - var(--aw)) / 2),-50%);
+  transition:transform var(--spring-t) var(--spring),opacity .25s}
+#side-slot.on-left{transform:translate(calc((var(--free) - var(--aw)) / 2),-50%)}
+#side-slot.off{opacity:0;pointer-events:none}
+#side-btn{display:flex;align-items:center;justify-content:center;width:100%;height:calc(var(--kh) * 2 + var(--gap));border-radius:14px;background:var(--sub-alt);color:var(--sub);transition:color .15s}
+#side-btn svg{width:24px;height:24px}
+#side-slot.on-left #side-btn svg path{transform:rotate(180deg)}
+body.playing footer{display:none}
 .pad .bksp svg{width:1.3em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- results ---------- */
@@ -222,19 +233,20 @@ footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:
 
   <!-- GAME -->
   <section class="pane" id="pane-game">
-    <div class="hud"><span>seconds <span class="time" id="time">120</span></span><span>score <span id="score" style="color:var(--text)">0</span></span></div>
+    <div class="hud"><span>seconds <span class="time" id="time">120</span></span>
+      <span class="hud-r"><span>score <span id="score" style="color:var(--text)">0</span></span>
+        <button class="tool" id="zoom-btn" onclick="toggleBig()" title="shrink / enlarge pad" aria-label="shrink or enlarge pad">
+          <svg viewBox="0 0 24 24"><g class="za"><path d="M15 3h6v6"/><path d="M21 3l-7 7"/></g><g class="za"><path d="M9 21H3v-6"/><path d="M3 21l7-7"/></g></svg>
+        </button></span></div>
     <div class="problem" id="problem"></div>
     <div class="answer-wrap" id="native-wrap">
       <input id="answer" inputmode="numeric" autocomplete="off">
     </div>
     <div class="answer-ghost" id="ghost-wrap" style="display:none"><span id="ghost"></span><span class="caret"></span></div>
     <div class="pad-area" id="pad-area" style="display:none">
-      <div class="pad-tools">
-        <button class="tool" id="side-btn" onclick="swapSide()" title="move pad to the other side" aria-label="move pad to the other side">
+      <div id="side-slot">
+        <button id="side-btn" onclick="swapSide()" title="move pad to the other side" aria-label="move pad to the other side">
           <svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6"/></svg>
-        </button>
-        <button class="tool" id="zoom-btn" onclick="toggleBig()" title="shrink / enlarge pad" aria-label="shrink or enlarge pad">
-          <svg viewBox="0 0 24 24"><g class="za"><path d="M15 3h6v6"/><path d="M21 3l-7 7"/></g><g class="za"><path d="M9 21H3v-6"/><path d="M3 21l7-7"/></g></svg>
         </button>
       </div>
       <div class="pad" id="pad"></div>
@@ -275,7 +287,7 @@ footer{flex-shrink:0;text-align:center;color:var(--sub);font-size:.6rem;padding:
       <button data-k="native">native keyboard</button>
       <button data-k="pad">on-screen pad</button>
     </div>
-    <p class="set-note">during play, the window button shrinks the pad to one side for thumb reach and the arrow moves it across.</p>
+    <p class="set-note">during play, the window button in the top corner shrinks the pad to one side for thumb reach; tap the arrow in the free space to move it across.</p>
 
     <div class="set-h">font</div>
     <div class="seg" id="font-seg">
@@ -441,6 +453,7 @@ function go(p){
   $("nav-config").classList.toggle("active",p==="config");
   $("nav-settings").classList.toggle("active",p==="settings");
   if(game&&p!=="game"){clearInterval(game.tick);game=null;}
+  document.body.classList.toggle("playing",p==="game");
   if(p==="config")renderHome();
 }
 
@@ -632,6 +645,7 @@ function applyKbd(){
   $("native-wrap").style.display=usePad?"none":"flex";
   $("ghost-wrap").style.display=usePad?"flex":"none";
   $("pad-area").style.display=usePad?"block":"none";
+  $("zoom-btn").style.display=usePad?"":"none";
   applyPadLayout();
 }
 /* big = centered full pad; compact = small pad hugging S.side. zooming back out restores the side */
@@ -640,9 +654,9 @@ function applyPadLayout(){
   pad.classList.toggle("compact",!S.big);
   pad.classList.toggle("left",S.side==="left");
   pad.classList.toggle("right",S.side==="right");
-  const side=$("side-btn");
-  side.classList.toggle("off",S.big);
-  side.classList.toggle("to-left",S.side==="right");
+  const slot=$("side-slot");
+  slot.classList.toggle("off",S.big);
+  slot.classList.toggle("on-left",S.side==="right");
   $("zoom-btn").classList.toggle("big",S.big);
 }
 function swapSide(){ if(S.big)return; S.side=S.side==="right"?"left":"right"; applyPadLayout(); savePrefs(); }
